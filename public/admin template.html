@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Coaching Admin Dashboard</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --sidebar-bg-2: #111827;
+            --sidebar-text: #cbd5e1;
+            --sidebar-muted: #94a3b8;
+            --sidebar-hover: rgba(255, 255, 255, 0.08);
+            --sidebar-active: linear-gradient(135deg, #4f46e5, #7c3aed);
+            --topbar-bg: rgba(255, 255, 255, 0.9);
+            --page-bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-soft: rgba(148, 163, 184, 0.18);
+            --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+            --primary-gradient: linear-gradient(135deg, #2563eb, #7c3aed);
+            --success-gradient: linear-gradient(135deg, #10b981, #14b8a6);
+            --warning-gradient: linear-gradient(135deg, #f59e0b, #f97316);
+            --danger-gradient: linear-gradient(135deg, #ef4444, #ec4899);
+            --info-gradient: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            --radius-xl: 22px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 22%),
+                radial-gradient(circle at top right, rgba(168, 85, 247, 0.08), transparent 18%),
+                var(--page-bg);
+            color: var(--text-dark);
+            font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 285px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-2));
+            color: var(--sidebar-text);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1040;
+            transition: all 0.3s ease;
+            box-shadow: 18px 0 40px rgba(2, 6, 23, 0.18);
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.12);
+            border-radius: 20px;
+        }
+
+        .brand-wrap {
+            padding: 1.35rem 1.4rem 1.1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: sticky;
+            top: 0;
+            background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(17,24,39,0.98));
+            z-index: 2;
+            backdrop-filter: blur(12px);
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            color: #fff;
+            box-shadow: 0 12px 26px rgba(59, 130, 246, 0.28);
+            flex-shrink: 0;
+        }
+
+        .brand-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            margin: 2px 0 0;
+            font-size: 0.8rem;
+            color: var(--sidebar-muted);
+        }
+
+        .tenant-mini {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .tenant-mini .small {
+            color: var(--sidebar-muted);
+        }
+
+        .tenant-mini strong {
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-menu {
+            padding: 1rem 0.8rem 1.25rem;
+        }
+
+        .menu-title {
+            padding: 0.5rem 0.85rem;
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--sidebar-muted);
+            font-weight: 700;
+        }
+
+        .nav-pills .nav-link {
+            color: var(--sidebar-text);
+            border-radius: 16px;
+            padding: 0.84rem 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0.2rem 0;
+            font-weight: 500;
+            transition: all 0.25s ease;
+        }
+
+        .nav-pills .nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .nav-pills .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: #fff;
+            transform: translateX(2px);
+        }
+
+        .nav-pills .nav-link.active {
+            background: var(--sidebar-active);
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(79, 70, 229, 0.28);
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: rgba(255,255,255,0.14);
+            color: #fff;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            padding: 0.18rem 0.52rem;
+        }
+
+        .content-wrap {
+            margin-left: 285px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            padding: 1rem 1.4rem;
+            background: var(--topbar-bg);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            justify-content: space-between;
+        }
+
+        .topbar-left,
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-toggle {
+            width: 46px;
+            height: 46px;
+            border: none;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: var(--shadow-soft);
+            color: var(--text-dark);
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 340px;
+        }
+
+        .search-box .form-control {
+            height: 48px;
+            border-radius: 16px;
+            border: 1px solid var(--border-soft);
+            padding-left: 46px;
+            box-shadow: none;
+            background: #fff;
+        }
+
+        .search-box .form-control:focus {
+            border-color: rgba(37, 99, 235, 0.35);
+            box-shadow: 0 0 0 0.22rem rgba(37, 99, 235, 0.08);
+        }
+
+        .search-box i {
+            position: absolute;
+            top: 50%;
+            left: 16px;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .icon-btn {
+            width: 46px;
+            height: 46px;
+            border: none;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            color: var(--text-dark);
+        }
+
+        .icon-btn .dot {
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: 2px solid #fff;
+        }
+
+        .profile-chip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            border-radius: 18px;
+            padding: 8px 12px 8px 8px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .profile-chip .name {
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .profile-chip .role {
+            margin: 2px 0 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .page-body {
+            padding: 1.5rem;
+        }
+
+        .page-title-wrap {
+            margin-bottom: 1.4rem;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .page-subtitle {
+            margin: 0.3rem 0 0;
+            color: var(--text-muted);
+        }
+
+        .hero-panel {
+            background: linear-gradient(135deg, #1d4ed8, #6d28d9);
+            color: #fff;
+            border-radius: 26px;
+            padding: 1.6rem;
+            box-shadow: 0 20px 45px rgba(59, 130, 246, 0.22);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero-panel::before,
+        .hero-panel::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .hero-panel::before {
+            width: 220px;
+            height: 220px;
+            right: -60px;
+            top: -60px;
+        }
+
+        .hero-panel::after {
+            width: 150px;
+            height: 150px;
+            bottom: -45px;
+            left: -45px;
+        }
+
+        .hero-panel h3 {
+            font-weight: 800;
+            margin-bottom: 0.55rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-panel p,
+        .hero-panel .btn {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-panel .btn-light {
+            border-radius: 14px;
+            padding: 0.75rem 1.05rem;
+            font-weight: 700;
+        }
+
+        .hero-panel .btn-outline-light {
+            border-radius: 14px;
+            padding: 0.75rem 1.05rem;
+            font-weight: 700;
+        }
+
+        .stat-card {
+            border: none;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            height: 100%;
+            background: #fff;
+        }
+
+        .stat-card .card-body {
+            padding: 1.2rem 1.2rem;
+        }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 14px 28px rgba(2, 6, 23, 0.12);
+        }
+
+        .bg-primary-soft { background: var(--primary-gradient); }
+        .bg-success-soft { background: var(--success-gradient); }
+        .bg-warning-soft { background: var(--warning-gradient); }
+        .bg-danger-soft  { background: var(--danger-gradient); }
+        .bg-info-soft    { background: var(--info-gradient); }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            line-height: 1.1;
+        }
+
+        .stat-meta {
+            margin-top: 0.55rem;
+            font-size: 0.86rem;
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .panel-card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 22px;
+            box-shadow: var(--shadow-soft);
+            height: 100%;
+        }
+
+        .panel-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            padding: 1rem 1.2rem;
+        }
+
+        .panel-card .card-title {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .panel-card .card-subtitle {
+            margin-top: 0.2rem;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        .panel-card .card-body {
+            padding: 1.15rem 1.2rem 1.2rem;
+        }
+
+        .mini-chart {
+            display: flex;
+            align-items: end;
+            gap: 10px;
+            height: 140px;
+        }
+
+        .mini-chart .bar {
+            flex: 1;
+            border-radius: 14px 14px 8px 8px;
+            background: linear-gradient(180deg, rgba(37,99,235,0.95), rgba(124,58,237,0.95));
+            min-height: 18px;
+            position: relative;
+        }
+
+        .mini-chart .bar span {
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-muted);
+            font-size: 0.77rem;
+            font-weight: 600;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 14px;
+            padding: 0.9rem 0;
+            border-bottom: 1px dashed rgba(148, 163, 184, 0.22);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .activity-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .activity-title {
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .activity-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            color: #94a3b8;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .table-smart {
+            margin-bottom: 0;
+        }
+
+        .table-smart thead th {
+            border: 0;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.95rem 1rem;
+            background: rgba(148, 163, 184, 0.06);
+        }
+
+        .table-smart tbody td {
+            padding: 0.95rem 1rem;
+            vertical-align: middle;
+            border-color: rgba(148, 163, 184, 0.12);
+        }
+
+        .student-chip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .student-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .soft-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.38rem 0.72rem;
+            font-size: 0.77rem;
+            font-weight: 700;
+        }
+
+        .soft-success {
+            background: rgba(16, 185, 129, 0.12);
+            color: #059669;
+        }
+
+        .soft-warning {
+            background: rgba(245, 158, 11, 0.14);
+            color: #d97706;
+        }
+
+        .soft-danger {
+            background: rgba(239, 68, 68, 0.12);
+            color: #dc2626;
+        }
+
+        .soft-primary {
+            background: rgba(59, 130, 246, 0.12);
+            color: #2563eb;
+        }
+
+        .progress-wrap {
+            margin-bottom: 1rem;
+        }
+
+        .progress-wrap:last-child {
+            margin-bottom: 0;
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.45rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.14);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            border-radius: 999px;
+        }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 1rem;
+            border-radius: 18px;
+            background: rgba(148, 163, 184, 0.06);
+            transition: 0.25s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-2px);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .quick-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+
+        .quick-title {
+            margin: 0;
+            font-weight: 800;
+            font-size: 0.96rem;
+        }
+
+        .quick-text {
+            margin: 0.2rem 0 0;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+        }
+
+        .mobile-backdrop {
+            display: none;
+        }
+
+        @media (max-width: 1199.98px) {
+            .search-box {
+                min-width: 240px;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .content-wrap {
+                margin-left: 0;
+            }
+
+            .mobile-backdrop.show {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.45);
+                z-index: 1035;
+                backdrop-filter: blur(2px);
+            }
+
+            .topbar-inner {
+                flex-wrap: wrap;
+            }
+
+            .topbar-left {
+                flex: 1 1 100%;
+                justify-content: space-between;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+
+            .topbar-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .topbar {
+                padding: 1rem;
+            }
+
+            .page-body {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 1.45rem;
+            }
+
+            .hero-panel {
+                padding: 1.2rem;
+                border-radius: 22px;
+            }
+
+            .stat-card .card-body,
+            .panel-card .card-body {
+                padding: 1rem;
+            }
+
+            .panel-card .card-header {
+                padding: 1rem;
+            }
+
+            .profile-chip {
+                padding-right: 10px;
+            }
+
+            .profile-chip .text-wrap {
+                display: none;
+            }
+
+            .table-responsive {
+                border-radius: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-backdrop" id="mobileBackdrop"></div>
+
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand-wrap">
+                <div class="brand-box">
+                    <div class="brand-logo">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <div>
+                        <h1 class="brand-title">Coaching Admin</h1>
+                        <p class="brand-subtitle">Smart management dashboard</p>
+                    </div>
+                </div>
+
+                <div class="tenant-mini">
+                    <div>
+                        <div class="small">Active Center</div>
+                        <strong>Bright Future Coaching</strong>
+                    </div>
+                    <span class="soft-badge soft-success">Live</span>
+                </div>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-title">Overview</div>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active">
+                            <i class="bi bi-grid-1x2-fill"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="menu-title">Management</div>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Students</span>
+                            <span class="nav-badge">248</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-person-workspace"></i>
+                            <span>Teachers</span>
+                            <span class="nav-badge">3</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-diagram-3-fill"></i>
+                            <span>Batches</span>
+                            <span class="nav-badge">12</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-journal-text"></i>
+                            <span>Courses</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="menu-title">Academic</div>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-calendar2-week-fill"></i>
+                            <span>Routine</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-check2-square"></i>
+                            <span>Attendance</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-ui-checks-grid"></i>
+                            <span>Exams</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-bar-chart-line-fill"></i>
+                            <span>Results</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="menu-title">Finance</div>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-cash-stack"></i>
+                            <span>Collect Fees</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-wallet2"></i>
+                            <span>Accounting</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-receipt-cutoff"></i>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="menu-title">Communication</div>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-whatsapp"></i>
+                            <span>WhatsApp Groups</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-chat-dots-fill"></i>
+                            <span>Notices</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="menu-title">System</div>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="bi bi-gear-fill"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="content-wrap">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-inner">
+                    <div class="topbar-left">
+                        <button class="menu-toggle d-lg-none" id="menuToggle" type="button">
+                            <i class="bi bi-list fs-4"></i>
+                        </button>
+
+                        <div class="search-box">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="form-control" placeholder="Search students, batches, payments, reports...">
+                        </div>
+                    </div>
+
+                    <div class="topbar-right">
+                        <button class="icon-btn" type="button">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+
+                        <button class="icon-btn" type="button">
+                            <i class="bi bi-bell-fill"></i>
+                            <span class="dot"></span>
+                        </button>
+
+                        <button class="icon-btn" type="button">
+                            <i class="bi bi-envelope-fill"></i>
+                        </button>
+
+                        <div class="profile-chip">
+                            <div class="avatar">AR</div>
+                            <div class="text-wrap">
+                                <p class="name">Arifur Rahman</p>
+                                <p class="role">Super Admin</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page body -->
+            <main class="page-body">
+                <div class="page-title-wrap d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <h2 class="page-title">Dashboard Overview</h2>
+                        <p class="page-subtitle">Welcome back. Here is a quick look at today’s academic and financial performance.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary rounded-4 px-4">
+                            <i class="bi bi-person-plus-fill me-2"></i>Add Student
+                        </button>
+                        <button class="btn btn-outline-secondary rounded-4 px-4">
+                            <i class="bi bi-printer-fill me-2"></i>Print Report
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-12">
+                        <div class="hero-panel">
+                            <div class="row align-items-center">
+                                <div class="col-lg-8">
+                                    <h3>Manage your coaching center smarter and faster</h3>
+                                    <p class="mb-4 text-white-50">
+                                        Track students, batch attendance, fee collection, teacher activity, and upcoming exams from one clean dashboard.
+                                    </p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a href="#" class="btn btn-light">
+                                            <i class="bi bi-cash-coin me-2"></i>Collect Fee
+                                        </a>
+                                        <a href="#" class="btn btn-outline-light">
+                                            <i class="bi bi-check2-square me-2"></i>Take Attendance
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 mt-4 mt-lg-0">
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <div class="bg-white bg-opacity-10 rounded-4 p-3">
+                                                <div class="small text-white-50">Today’s Collection</div>
+                                                <div class="fs-4 fw-bold">৳ 18,450</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="bg-white bg-opacity-10 rounded-4 p-3">
+                                                <div class="small text-white-50">Due Students</div>
+                                                <div class="fs-4 fw-bold">47</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="bg-white bg-opacity-10 rounded-4 p-3">
+                                                <div class="small text-white-50">Attendance</div>
+                                                <div class="fs-4 fw-bold">91%</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="bg-white bg-opacity-10 rounded-4 p-3">
+                                                <div class="small text-white-50">Active Batches</div>
+                                                <div class="fs-4 fw-bold">12</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card stat-card">
+                            <div class="card-body">
+                                <div class="stat-icon bg-primary-soft">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div class="stat-label">Total Students</div>
+                                <div class="stat-value">248</div>
+                                <div class="stat-meta">
+                                    <i class="bi bi-arrow-up-short"></i> 8.4% this month
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card stat-card">
+                            <div class="card-body">
+                                <div class="stat-icon bg-success-soft">
+                                    <i class="bi bi-cash-stack"></i>
+                                </div>
+                                <div class="stat-label">Monthly Collection</div>
+                                <div class="stat-value">৳ 3.48L</div>
+                                <div class="stat-meta">
+                                    <i class="bi bi-arrow-up-short"></i> 12.1% growth
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card stat-card">
+                            <div class="card-body">
+                                <div class="stat-icon bg-warning-soft">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                </div>
+                                <div class="stat-label">Pending Dues</div>
+                                <div class="stat-value">47</div>
+                                <div class="stat-meta text-warning">
+                                    <i class="bi bi-info-circle me-1"></i> Needs follow-up
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card stat-card">
+                            <div class="card-body">
+                                <div class="stat-icon bg-danger-soft">
+                                    <i class="bi bi-ui-checks-grid"></i>
+                                </div>
+                                <div class="stat-label">Upcoming Exams</div>
+                                <div class="stat-value">06</div>
+                                <div class="stat-meta text-danger">
+                                    <i class="bi bi-clock-history me-1"></i> Next in 2 days
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-8">
+                        <div class="card panel-card">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <h5 class="card-title">Collection Overview</h5>
+                                    <div class="card-subtitle">Weekly payment summary by batch</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary rounded-4 px-3">
+                                    View Details
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="mini-chart px-2 pb-4">
+                                    <div class="bar" style="height: 70%;"><span>Mon</span></div>
+                                    <div class="bar" style="height: 52%;"><span>Tue</span></div>
+                                    <div class="bar" style="height: 88%;"><span>Wed</span></div>
+                                    <div class="bar" style="height: 64%;"><span>Thu</span></div>
+                                    <div class="bar" style="height: 95%;"><span>Fri</span></div>
+                                    <div class="bar" style="height: 58%;"><span>Sat</span></div>
+                                    <div class="bar" style="height: 80%;"><span>Sun</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4">
+                        <div class="card panel-card">
+                            <div class="card-header">
+                                <h5 class="card-title">Quick Actions</h5>
+                                <div class="card-subtitle">Most used operations</div>
+                            </div>
+                            <div class="card-body d-grid gap-3">
+                                <a href="#" class="quick-action">
+                                    <div class="quick-icon bg-primary-soft">
+                                        <i class="bi bi-person-plus-fill"></i>
+                                    </div>
+                                    <div>
+                                        <p class="quick-title">New Admission</p>
+                                        <p class="quick-text">Add a student and assign a batch</p>
+                                    </div>
+                                </a>
+
+                                <a href="#" class="quick-action">
+                                    <div class="quick-icon bg-success-soft">
+                                        <i class="bi bi-cash-coin"></i>
+                                    </div>
+                                    <div>
+                                        <p class="quick-title">Collect Payment</p>
+                                        <p class="quick-text">Record fee and print receipt</p>
+                                    </div>
+                                </a>
+
+                                <a href="#" class="quick-action">
+                                    <div class="quick-icon bg-warning-soft">
+                                        <i class="bi bi-check2-square"></i>
+                                    </div>
+                                    <div>
+                                        <p class="quick-title">Take Attendance</p>
+                                        <p class="quick-text">Batch-wise attendance entry</p>
+                                    </div>
+                                </a>
+
+                                <a href="#" class="quick-action">
+                                    <div class="quick-icon bg-danger-soft">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </div>
+                                    <div>
+                                        <p class="quick-title">Batch WhatsApp</p>
+                                        <p class="quick-text">Manage group and contact list</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-7">
+                        <div class="card panel-card">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <h5 class="card-title">Recent Payments</h5>
+                                    <div class="card-subtitle">Latest fee entries from admin and teachers</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary rounded-4 px-3">See All</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-smart align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Batch</th>
+                                                <th>Amount</th>
+                                                <th>Collected By</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <div class="student-chip">
+                                                        <div class="student-avatar">RA</div>
+                                                        <div>
+                                                            <div class="fw-bold">Rahim Ahmed</div>
+                                                            <small class="text-muted">ID: STD-1008</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>SSC Science Morning</td>
+                                                <td class="fw-bold">৳ 1,500</td>
+                                                <td>Admin</td>
+                                                <td><span class="soft-badge soft-success">Paid</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="student-chip">
+                                                        <div class="student-avatar">SI</div>
+                                                        <div>
+                                                            <div class="fw-bold">Sumaiya Islam</div>
+                                                            <small class="text-muted">ID: STD-1021</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>HSC Math Batch A</td>
+                                                <td class="fw-bold">৳ 2,000</td>
+                                                <td>Teacher</td>
+                                                <td><span class="soft-badge soft-success">Paid</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="student-chip">
+                                                        <div class="student-avatar">HT</div>
+                                                        <div>
+                                                            <div class="fw-bold">Hasan Tanvir</div>
+                                                            <small class="text-muted">ID: STD-1032</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>Admission Model Test</td>
+                                                <td class="fw-bold">৳ 800</td>
+                                                <td>Admin</td>
+                                                <td><span class="soft-badge soft-warning">Partial</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="student-chip">
+                                                        <div class="student-avatar">NF</div>
+                                                        <div>
+                                                            <div class="fw-bold">Nusrat Faria</div>
+                                                            <small class="text-muted">ID: STD-1045</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>Class 9 English Batch</td>
+                                                <td class="fw-bold">৳ 1,200</td>
+                                                <td>Teacher</td>
+                                                <td><span class="soft-badge soft-danger">Due Left</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-5">
+                        <div class="card panel-card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title">Performance Snapshot</h5>
+                                <div class="card-subtitle">Operational health by key area</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="progress-wrap">
+                                    <div class="progress-meta">
+                                        <span>Attendance Completion</span>
+                                        <span>91%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 91%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-wrap">
+                                    <div class="progress-meta">
+                                        <span>Fee Collection Target</span>
+                                        <span>74%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" style="width: 74%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-wrap">
+                                    <div class="progress-meta">
+                                        <span>Exam Preparation</span>
+                                        <span>63%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: 63%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-wrap">
+                                    <div class="progress-meta">
+                                        <span>Student Retention</span>
+                                        <span>87%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: 87%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-xl-5">
+                        <div class="card panel-card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title">Recent Activities</h5>
+                                <div class="card-subtitle">Latest actions across the system</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="activity-item">
+                                    <div class="activity-icon bg-primary-soft">
+                                        <i class="bi bi-person-plus-fill"></i>
+                                    </div>
+                                    <div>
+                                        <div class="activity-title">New student admitted</div>
+                                        <div class="activity-text">Mim Akter was enrolled in HSC Science Evening Batch.</div>
+                                        <div class="activity-time">10 minutes ago</div>
+                                    </div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div class="activity-icon bg-success-soft">
+                                        <i class="bi bi-cash-stack"></i>
+                                    </div>
+                                    <div>
+                                        <div class="activity-title">Fee payment recorded</div>
+                                        <div class="activity-text">Monthly fee of ৳1,500 received and receipt printed.</div>
+                                        <div class="activity-time">28 minutes ago</div>
+                                    </div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div class="activity-icon bg-warning-soft">
+                                        <i class="bi bi-check2-square"></i>
+                                    </div>
+                                    <div>
+                                        <div class="activity-title">Attendance submitted</div>
+                                        <div class="activity-text">Batch attendance completed for SSC Science Morning.</div>
+                                        <div class="activity-time">1 hour ago</div>
+                                    </div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div class="activity-icon bg-danger-soft">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </div>
+                                    <div>
+                                        <div class="activity-title">Batch group updated</div>
+                                        <div class="activity-text">WhatsApp invite link updated for Admission Model Test Batch.</div>
+                                        <div class="activity-time">2 hours ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-7">
+                        <div class="card panel-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <h5 class="card-title">Upcoming Schedule</h5>
+                                    <div class="card-subtitle">Today’s academic and admin activities</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary rounded-4 px-3">Full Calendar</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-smart align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Time</th>
+                                                <th>Task</th>
+                                                <th>Teacher</th>
+                                                <th>Batch</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>09:00 AM</td>
+                                                <td>Physics Class</td>
+                                                <td>Mr. Rifat</td>
+                                                <td>HSC Science Batch A</td>
+                                                <td><span class="soft-badge soft-primary">Scheduled</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>11:00 AM</td>
+                                                <td>Fee Collection Window</td>
+                                                <td>Office Admin</td>
+                                                <td>All Batches</td>
+                                                <td><span class="soft-badge soft-success">Open</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>02:00 PM</td>
+                                                <td>Math Model Test</td>
+                                                <td>Ms. Shila</td>
+                                                <td>SSC Science Morning</td>
+                                                <td><span class="soft-badge soft-warning">Upcoming</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>05:00 PM</td>
+                                                <td>Guardian Notice</td>
+                                                <td>Admin</td>
+                                                <td>Batch C</td>
+                                                <td><span class="soft-badge soft-primary">Pending</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mobileBackdrop = document.getElementById('mobileBackdrop');
+
+        function openSidebar() {
+            sidebar.classList.add('show');
+            mobileBackdrop.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show');
+            mobileBackdrop.classList.remove('show');
+        }
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function () {
+                if (sidebar.classList.contains('show')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+        }
+
+        if (mobileBackdrop) {
+            mobileBackdrop.addEventListener('click', closeSidebar);
+        }
+
+        window.addEventListener('resize', function () {
+            if (window.innerWidth >= 992) {
+                closeSidebar();
+            }
+        });
+    </script>
+</body>
+</html>

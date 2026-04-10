@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Models\FeeHead;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class UpdateFeeHeadRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->route('fee_head') !== null
+            && ($this->user()?->can('update', $this->route('fee_head')) ?? false);
+    }
+
+    public function rules(): array
+    {
+        /** @var \App\Models\FeeHead $feeHead */
+        $feeHead = $this->route('fee_head');
+        $tenantId = $this->user()->tenant_id;
+
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('fee_heads', 'code')
+                    ->where(fn ($query) => $query->where('tenant_id', $tenantId))
+                    ->ignore($feeHead->getKey()),
+            ],
+            'type' => ['required', Rule::in(FeeHead::types())],
+            'frequency' => ['required', Rule::in(FeeHead::frequencies())],
+            'is_active' => ['nullable', 'boolean'],
+            'description' => ['nullable', 'string'],
+        ];
+    }
+}
