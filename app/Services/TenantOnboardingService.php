@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\TenantSetting;
 use App\Models\User;
 use App\Support\PermissionRegistry;
+use App\Support\TenantSettingsDefaults;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -80,25 +81,7 @@ class TenantOnboardingService
 
     protected function createDefaultSettings(Tenant $tenant): void
     {
-        $defaults = [
-            'communication.channels' => [
-                'sms' => false,
-                'whatsapp' => false,
-                'email' => true,
-            ],
-            'communication.events' => [
-                'admission' => true,
-                'fee_payment' => true,
-                'due_reminder' => false,
-                'attendance_alert' => false,
-                'exam_notice' => false,
-                'result_publish' => false,
-            ],
-            'billing.defaults' => [
-                'model' => Tenant::BILLING_MODEL_PER_STUDENT,
-                'currency' => 'BDT',
-            ],
-        ];
+        $defaults = TenantSettingsDefaults::all($tenant);
 
         foreach ($defaults as $key => $value) {
             TenantSetting::query()->create([

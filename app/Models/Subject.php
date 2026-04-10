@@ -26,4 +26,9 @@ class Subject extends Model
     {
         return $this->hasMany(Batch::class);
     }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(BatchSchedule::class);
+    }
 }

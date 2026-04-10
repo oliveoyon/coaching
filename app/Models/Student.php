@@ -78,6 +78,21 @@ class Student extends Model
         return $this->hasMany(StudentFeeOverride::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function dues(): HasMany
+    {
+        return $this->hasMany(StudentDue::class);
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
     public function scopeVisibleTo($query, User $user)
     {
         if ($user->isSuperAdmin()) {

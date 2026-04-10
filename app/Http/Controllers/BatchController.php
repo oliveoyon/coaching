@@ -167,11 +167,17 @@ class BatchController extends Controller
                 }
 
                 return [
+                    'tenant_id' => $batch->tenant_id,
+                    'subject_id' => $batch->subject_id,
+                    'teacher_id' => $batch->owner_teacher_id,
                     'day_of_week' => $day,
                     'start_time' => $start,
                     'end_time' => $end,
+                    'session_type' => BatchSchedule::SESSION_TYPE_REGULAR,
+                    'is_extra' => false,
                     'room_name' => filled($room) ? $room : null,
                     'sort_order' => $index + 1,
+                    'notes' => null,
                 ];
             })
             ->filter()

@@ -106,6 +106,31 @@ class Tenant extends Model
         return $this->hasMany(StudentFeeOverride::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function paymentItems(): HasMany
+    {
+        return $this->hasMany(PaymentItem::class);
+    }
+
+    public function dues(): HasMany
+    {
+        return $this->hasMany(StudentDue::class);
+    }
+
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class);
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
     public function programs(): HasMany
     {
         return $this->hasMany(Program::class);
@@ -119,6 +144,11 @@ class Tenant extends Model
     public function batches(): HasMany
     {
         return $this->hasMany(Batch::class);
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(BatchSchedule::class);
     }
 
     public function isAccessible(): bool

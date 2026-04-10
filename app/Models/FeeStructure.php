@@ -67,6 +67,11 @@ class FeeStructure extends Model
         return $this->hasMany(StudentFeeOverride::class);
     }
 
+    public function paymentItems(): HasMany
+    {
+        return $this->hasMany(PaymentItem::class);
+    }
+
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class, 'applicable_id')

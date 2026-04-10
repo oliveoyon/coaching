@@ -53,9 +53,29 @@ class Teacher extends Model
         return $this->hasMany(Batch::class, 'owner_teacher_id');
     }
 
+    public function ownedDues(): HasMany
+    {
+        return $this->hasMany(StudentDue::class, 'owner_teacher_id');
+    }
+
     public function ownedStudents(): HasMany
     {
         return $this->hasMany(Student::class, 'owner_teacher_id');
+    }
+
+    public function ownedPayments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'owner_teacher_id');
+    }
+
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class, 'owner_teacher_id');
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(BatchSchedule::class);
     }
 
     public function scopeVisibleTo($query, User $user)

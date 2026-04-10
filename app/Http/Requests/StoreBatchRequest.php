@@ -4,9 +4,9 @@ namespace App\Http\Requests;
 
 use App\Models\Batch;
 use App\Models\BatchSchedule;
+use App\Models\Teacher;
 use App\Models\Program;
 use App\Models\Subject;
-use App\Models\Teacher;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -74,10 +74,17 @@ class StoreBatchRequest extends FormRequest
                 $days = $this->input('schedule_days', []);
                 $starts = $this->input('schedule_start_times', []);
                 $ends = $this->input('schedule_end_times', []);
+                $rooms = $this->input('schedule_rooms', []);
+                $tenantId = $this->user()->tenant_id;
+                $teacherId = (int) ($this->user()->isTeacher() && $this->user()->teacher
+                    ? $this->user()->teacher->getKey()
+                    : $this->input('owner_teacher_id'));
+                $draftRows = [];
 
                 foreach ($days as $index => $day) {
                     $start = $starts[$index] ?? null;
                     $end = $ends[$index] ?? null;
+                    $room = $rooms[$index] ?? null;
                     $hasAny = filled($day) || filled($start) || filled($end);
 
                     if (! $hasAny) {
@@ -90,6 +97,53 @@ class StoreBatchRequest extends FormRequest
 
                     if (filled($start) && filled($end) && $start >= $end) {
                         $validator->errors()->add('schedule_end_times', 'Schedule end time must be after start time.');
+                    }
+
+                    if (filled($day) && filled($start) && filled($end)) {
+                        $draftRows[] = [
+                            'day' => $day,
+                            'start' => $start,
+                            'end' => $end,
+                            'room' => filled($room) ? (string) $room : null,
+                        ];
+                    }
+                }
+
+                foreach ($draftRows as $index => $row) {
+                    foreach ($draftRows as $compareIndex => $compareRow) {
+                        if ($index >= $compareIndex) {
+                            continue;
+                        }
+
+                        if ($row['day'] === $compareRow['day'] && $row['start'] < $compareRow['end'] && $row['end'] > $compareRow['start']) {
+                            $validator->errors()->add('schedule_days', 'Routine rows inside the same batch cannot overlap on the same day.');
+                        }
+                    }
+
+                    $teacherConflict = BatchSchedule::query()
+                        ->where('tenant_id', $tenantId)
+                        ->where('teacher_id', $teacherId)
+                        ->where('day_of_week', $row['day'])
+                        ->where('start_time', '<', $row['end'])
+                        ->where('end_time', '>', $row['start'])
+                        ->exists();
+
+                    if ($teacherConflict) {
+                        $validator->errors()->add('owner_teacher_id', 'Teacher has an overlapping schedule in another batch for one of these routine rows.');
+                    }
+
+                    if ($row['room']) {
+                        $roomConflict = BatchSchedule::query()
+                            ->where('tenant_id', $tenantId)
+                            ->where('room_name', $row['room'])
+                            ->where('day_of_week', $row['day'])
+                            ->where('start_time', '<', $row['end'])
+                            ->where('end_time', '>', $row['start'])
+                            ->exists();
+
+                        if ($roomConflict) {
+                            $validator->errors()->add('schedule_rooms', 'One of the routine rooms already has another overlapping class.');
+                        }
                     }
                 }
             },

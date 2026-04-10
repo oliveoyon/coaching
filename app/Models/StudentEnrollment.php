@@ -43,6 +43,21 @@ class StudentEnrollment extends Model
         return $this->belongsTo(Batch::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'student_enrollment_id');
+    }
+
+    public function dues()
+    {
+        return $this->hasMany(StudentDue::class, 'student_enrollment_id');
+    }
+
+    public function attendanceRecords()
+    {
+        return $this->hasMany(AttendanceRecord::class, 'student_enrollment_id');
+    }
+
     public function scopeVisibleTo($query, User $user)
     {
         if ($user->isSuperAdmin()) {

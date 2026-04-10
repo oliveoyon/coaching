@@ -65,11 +65,35 @@
                             <span>Batches</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{{ route('schedules.index') }}" class="nav-link {{ request()->routeIs('schedules.*') ? 'active' : '' }}">
+                            <i class="bi bi-calendar3-week"></i>
+                            <span>Routine</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('payments.index') }}" class="nav-link {{ request()->routeIs('payments.*') ? 'active' : '' }}">
+                            <i class="bi bi-cash-stack"></i>
+                            <span>Payments</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('attendance.index') }}" class="nav-link {{ request()->routeIs('attendance.*') ? 'active' : '' }}">
+                            <i class="bi bi-calendar-check"></i>
+                            <span>Attendance</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('dues.index') }}" class="nav-link {{ request()->routeIs('dues.*') ? 'active' : '' }}">
+                            <i class="bi bi-journal-check"></i>
+                            <span>Dues</span>
+                        </a>
+                    </li>
                     @if ($user->isAdmin())
                         <li class="nav-item">
-                            <a href="{{ route('billing-settings.edit') }}" class="nav-link {{ request()->routeIs('billing-settings.*') ? 'active' : '' }}">
+                            <a href="{{ route('settings.edit') }}" class="nav-link {{ request()->routeIs('settings.*') || request()->routeIs('billing-settings.*') ? 'active' : '' }}">
                                 <i class="bi bi-sliders"></i>
-                                <span>Billing Settings</span>
+                                <span>Settings</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -100,12 +124,6 @@
                     <span class="nav-link disabled">
                         <i class="bi bi-journal-text"></i>
                         <span>Exams</span>
-                    </span>
-                </li>
-                <li class="nav-item">
-                    <span class="nav-link disabled">
-                        <i class="bi bi-cash-stack"></i>
-                        <span>Payments</span>
                     </span>
                 </li>
             </ul>
@@ -199,10 +217,30 @@
                         <i class="bi bi-collection me-2"></i> Batches
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{ route('schedules.index') }}" class="nav-link {{ request()->routeIs('schedules.*') ? 'active' : 'text-light' }}">
+                        <i class="bi bi-calendar3-week me-2"></i> Routine
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('payments.index') }}" class="nav-link {{ request()->routeIs('payments.*') ? 'active' : 'text-light' }}">
+                        <i class="bi bi-cash-stack me-2"></i> Payments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('attendance.index') }}" class="nav-link {{ request()->routeIs('attendance.*') ? 'active' : 'text-light' }}">
+                        <i class="bi bi-calendar-check me-2"></i> Attendance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('dues.index') }}" class="nav-link {{ request()->routeIs('dues.*') ? 'active' : 'text-light' }}">
+                        <i class="bi bi-journal-check me-2"></i> Dues
+                    </a>
+                </li>
                 @if ($user->isAdmin())
                     <li class="nav-item">
-                        <a href="{{ route('billing-settings.edit') }}" class="nav-link {{ request()->routeIs('billing-settings.*') ? 'active' : 'text-light' }}">
-                            <i class="bi bi-sliders me-2"></i> Billing Settings
+                        <a href="{{ route('settings.edit') }}" class="nav-link {{ request()->routeIs('settings.*') || request()->routeIs('billing-settings.*') ? 'active' : 'text-light' }}">
+                            <i class="bi bi-sliders me-2"></i> Settings
                         </a>
                     </li>
                     <li class="nav-item">

@@ -3,9 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\Batch;
+use App\Models\AttendanceSession;
 use App\Models\FeeHead;
 use App\Models\FeeStructure;
 use App\Models\Guardian;
+use App\Models\Payment;
+use App\Models\PaymentPostAction;
 use App\Models\Program;
 use App\Models\Role;
 use App\Models\Student;
@@ -18,6 +21,9 @@ use App\Models\Teacher;
 use App\Models\TenantSetting;
 use App\Models\User;
 use App\Services\AcademicCatalogService;
+use App\Services\DueLedgerService;
+use App\Services\PaymentPostActionService;
+use App\Support\TenantSettingsDefaults;
 use App\Support\PermissionRegistry;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -27,6 +33,8 @@ class FoundationDemoSeeder extends Seeder
 {
     public function __construct(
         protected AcademicCatalogService $academicCatalogService,
+        protected DueLedgerService $dueLedgerService,
+        protected PaymentPostActionService $paymentPostActionService,
     ) {
     }
 
@@ -100,31 +108,21 @@ class FoundationDemoSeeder extends Seeder
             $this->seedAcademicStructure($tenant);
             $this->seedStudents($tenant);
             $this->seedEnrollments($tenant);
+            $this->seedAttendance($tenant);
             $this->seedBillingFoundation($tenant);
+            $this->seedPayments($tenant);
+            $this->seedDueLedger($tenant);
+            $this->seedPostPaymentActions($tenant);
         }
     }
 
     protected function seedTenantSettings(Tenant $tenant): void
     {
-        $settings = [
-            'communication.channels' => [
-                'sms' => false,
-                'whatsapp' => false,
-                'email' => true,
-            ],
-            'communication.events' => [
-                'admission' => true,
-                'fee_payment' => true,
-                'due_reminder' => false,
-                'attendance_alert' => false,
-                'exam_notice' => false,
-                'result_publish' => false,
-            ],
-            'billing.defaults' => [
-                'model' => $tenant->billing_model,
-                'currency' => $tenant->currency,
-            ],
-        ];
+        $settings = TenantSettingsDefaults::all($tenant);
+
+        $settings['communication.channels']['sms'] = $tenant->slug === 'sunrise-coaching-center';
+        $settings['payments.post_actions']['receipts']['pos_printer'] = $tenant->slug === 'scholars-academy';
+        $settings['payments.post_actions']['notifications']['sms'] = $tenant->slug === 'sunrise-coaching-center';
 
         foreach ($settings as $key => $value) {
             TenantSetting::query()->updateOrCreate(
@@ -245,18 +243,30 @@ class FoundationDemoSeeder extends Seeder
         $batch->schedules()->delete();
         $batch->schedules()->createMany([
             [
+                'tenant_id' => $tenant->getKey(),
+                'subject_id' => $subject?->getKey(),
+                'teacher_id' => $primaryTeacher->getKey(),
                 'day_of_week' => 'sunday',
                 'start_time' => '09:00',
                 'end_time' => '10:30',
+                'session_type' => \App\Models\BatchSchedule::SESSION_TYPE_REGULAR,
+                'is_extra' => false,
                 'room_name' => $batch->room_name,
                 'sort_order' => 1,
+                'notes' => 'Seeded routine row.',
             ],
             [
+                'tenant_id' => $tenant->getKey(),
+                'subject_id' => $subject?->getKey(),
+                'teacher_id' => $primaryTeacher->getKey(),
                 'day_of_week' => 'tuesday',
                 'start_time' => '09:00',
                 'end_time' => '10:30',
+                'session_type' => \App\Models\BatchSchedule::SESSION_TYPE_REGULAR,
+                'is_extra' => false,
                 'room_name' => $batch->room_name,
                 'sort_order' => 2,
+                'notes' => 'Seeded routine row.',
             ],
         ]);
     }
@@ -328,6 +338,105 @@ class FoundationDemoSeeder extends Seeder
                 'notes' => 'Seeded primary guardian.',
             ],
         ]);
+
+        $extraStudents = $tenant->slug === 'sunrise-coaching-center'
+            ? [
+                [
+                    'student_code' => 'STU-1002',
+                    'name' => 'Rafi Ahmed',
+                    'phone' => '01910000002',
+                    'email' => 'rafi@sunrise.test',
+                    'institution_name' => 'Mirpur Model College',
+                    'institution_class' => 'HSC Science',
+                    'address' => 'Pallabi, Dhaka',
+                    'guardian_name' => 'Selina Ahmed',
+                    'guardian_phone' => '01810000002',
+                    'guardian_relation_type' => Guardian::RELATION_MOTHER,
+                ],
+                [
+                    'student_code' => 'STU-1003',
+                    'name' => 'Tamim Noor',
+                    'phone' => '01910000003',
+                    'email' => 'tamim@sunrise.test',
+                    'institution_name' => 'Monipur High School',
+                    'institution_class' => 'Class 10',
+                    'address' => 'Kazipara, Dhaka',
+                    'guardian_name' => 'Anwar Noor',
+                    'guardian_phone' => '01810000003',
+                    'guardian_relation_type' => Guardian::RELATION_FATHER,
+                ],
+            ]
+            : [
+                [
+                    'student_code' => 'STU-2002',
+                    'name' => 'Sabbir Hasan',
+                    'phone' => '01920000002',
+                    'email' => 'sabbir@scholars.test',
+                    'institution_name' => 'Scholars High School',
+                    'institution_class' => 'Class 10',
+                    'address' => 'GEC, Chattogram',
+                    'guardian_name' => 'Momena Akter',
+                    'guardian_phone' => '01820000002',
+                    'guardian_relation_type' => Guardian::RELATION_MOTHER,
+                ],
+                [
+                    'student_code' => 'STU-2003',
+                    'name' => 'Tanzim Rahman',
+                    'phone' => '01920000003',
+                    'email' => 'tanzim@scholars.test',
+                    'institution_name' => 'Government High School',
+                    'institution_class' => 'Class 10',
+                    'address' => 'Panchlaish, Chattogram',
+                    'guardian_name' => 'Rahman Mia',
+                    'guardian_phone' => '01820000003',
+                    'guardian_relation_type' => Guardian::RELATION_FATHER,
+                ],
+            ];
+
+        foreach ($extraStudents as $extraStudent) {
+            $profile = Student::query()->updateOrCreate(
+                [
+                    'tenant_id' => $tenant->getKey(),
+                    'student_code' => $extraStudent['student_code'],
+                ],
+                [
+                    'user_id' => null,
+                    'owner_teacher_id' => $teacher->getKey(),
+                    'name' => $extraStudent['name'],
+                    'phone' => $extraStudent['phone'],
+                    'email' => $extraStudent['email'],
+                    'admission_date' => now()->subMonths(rand(1, 4))->toDateString(),
+                    'status' => Student::STATUS_ACTIVE,
+                    'institution_name' => $extraStudent['institution_name'],
+                    'institution_class' => $extraStudent['institution_class'],
+                    'address' => $extraStudent['address'],
+                    'notes' => 'Extra seeded student for due and collection testing.',
+                ],
+            );
+
+            $extraGuardian = Guardian::query()->updateOrCreate(
+                [
+                    'tenant_id' => $tenant->getKey(),
+                    'name' => $extraStudent['guardian_name'],
+                    'phone' => $extraStudent['guardian_phone'],
+                ],
+                [
+                    'user_id' => null,
+                    'email' => null,
+                    'occupation' => 'Guardian',
+                    'address' => $extraStudent['address'],
+                ],
+            );
+
+            $profile->guardians()->syncWithoutDetaching([
+                $extraGuardian->getKey() => [
+                    'tenant_id' => $tenant->getKey(),
+                    'relation_type' => $extraStudent['guardian_relation_type'],
+                    'is_primary' => true,
+                    'notes' => 'Seeded guardian for collection testing.',
+                ],
+            ]);
+        }
     }
 
     protected function seedEnrollments(Tenant $tenant): void
@@ -358,6 +467,76 @@ class FoundationDemoSeeder extends Seeder
                 'notes' => 'Seeded enrollment for module verification.',
             ],
         );
+
+        Student::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('id', '!=', $student->getKey())
+            ->orderBy('id')
+            ->get()
+            ->each(function (Student $extraStudent) use ($tenant, $batch): void {
+                StudentEnrollment::query()->updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->getKey(),
+                        'student_id' => $extraStudent->getKey(),
+                        'batch_id' => $batch->getKey(),
+                    ],
+                    [
+                        'enrolled_at' => now()->subDays(20)->toDateString(),
+                        'status' => StudentEnrollment::STATUS_ACTIVE,
+                        'notes' => 'Extra seeded enrollment for fee collection testing.',
+                    ],
+                );
+            });
+    }
+
+    protected function seedAttendance(Tenant $tenant): void
+    {
+        $batch = Batch::query()->where('tenant_id', $tenant->getKey())->orderBy('id')->first();
+        $teacher = Teacher::query()->where('tenant_id', $tenant->getKey())->orderBy('id')->first();
+        $taker = User::query()->where('tenant_id', $tenant->getKey())->where('email', $tenant->email)->first();
+
+        if (! $batch || ! $teacher || ! $taker) {
+            return;
+        }
+
+        $session = AttendanceSession::query()->updateOrCreate(
+            [
+                'tenant_id' => $tenant->getKey(),
+                'batch_id' => $batch->getKey(),
+                'attendance_date' => now()->subDay()->toDateString(),
+            ],
+            [
+                'owner_teacher_id' => $teacher->getKey(),
+                'taken_by' => $taker->getKey(),
+                'notes' => 'Seeded attendance session for module verification.',
+            ],
+        );
+
+        $session->records()->delete();
+
+        StudentEnrollment::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('batch_id', $batch->getKey())
+            ->where('status', StudentEnrollment::STATUS_ACTIVE)
+            ->with('student')
+            ->orderBy('student_id')
+            ->get()
+            ->each(function (StudentEnrollment $enrollment, int $index) use ($session, $tenant): void {
+                $statuses = [
+                    \App\Models\AttendanceRecord::STATUS_PRESENT,
+                    \App\Models\AttendanceRecord::STATUS_LATE,
+                    \App\Models\AttendanceRecord::STATUS_ABSENT,
+                    \App\Models\AttendanceRecord::STATUS_LEAVE,
+                ];
+
+                $session->records()->create([
+                    'tenant_id' => $tenant->getKey(),
+                    'student_id' => $enrollment->student_id,
+                    'student_enrollment_id' => $enrollment->getKey(),
+                    'status' => $statuses[$index % count($statuses)],
+                    'remarks' => $index === 1 ? 'Arrived after class started.' : ($index === 2 ? 'Guardian informed absence.' : null),
+                ]);
+            });
     }
 
     protected function seedBillingFoundation(Tenant $tenant): void
@@ -499,5 +678,145 @@ class FoundationDemoSeeder extends Seeder
                 ]
             );
         }
+    }
+
+    protected function seedPayments(Tenant $tenant): void
+    {
+        $students = Student::query()->where('tenant_id', $tenant->getKey())->orderBy('student_code')->get();
+        $enrollments = StudentEnrollment::query()->where('tenant_id', $tenant->getKey())->with('batch')->orderBy('student_id')->get()->keyBy('student_id');
+        $feeStructure = FeeStructure::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('title', $tenant->billing_model === Tenant::BILLING_MODEL_PER_BATCH ? 'Batch Tuition Charge' : 'Monthly Student Tuition')
+            ->first();
+        $collector = User::query()->where('tenant_id', $tenant->getKey())->where('email', $tenant->email)->first();
+
+        if ($students->isEmpty() || ! $feeStructure || ! $collector) {
+            return;
+        }
+
+        $students->each(function (Student $student, int $index) use ($tenant, $enrollments, $feeStructure, $collector): void {
+            $enrollment = $enrollments->get($student->getKey());
+            $chargeAmount = (float) ($tenant->slug === 'sunrise-coaching-center' ? 900 : 1700);
+            $currentPeriod = now()->format('Y-m');
+            $nextPeriod = now()->addMonth()->format('Y-m');
+
+            if ($index === 0) {
+                $paidAmount = $tenant->slug === 'sunrise-coaching-center' ? 500.00 : 800.00;
+
+                $payment = Payment::query()->updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->getKey(),
+                        'receipt_no' => 'RCT-'.now()->format('Ym').'-'.str_pad((string) ($tenant->getKey()), 4, '0', STR_PAD_LEFT),
+                    ],
+                    [
+                        'student_id' => $student->getKey(),
+                        'student_enrollment_id' => $enrollment?->getKey(),
+                        'batch_id' => $enrollment?->batch_id,
+                        'owner_teacher_id' => $enrollment?->batch?->owner_teacher_id ?? $student->owner_teacher_id,
+                        'collector_id' => $collector->getKey(),
+                        'collector_role' => 'admin',
+                        'payment_method' => Payment::METHOD_CASH,
+                        'collected_on' => now()->subDays(3),
+                        'total_amount' => $paidAmount,
+                        'status' => Payment::STATUS_RECEIVED,
+                        'notes' => 'Seeded partial payment for current period.',
+                    ]
+                );
+
+                $payment->items()->delete();
+                $payment->items()->create([
+                    'tenant_id' => $tenant->getKey(),
+                    'fee_head_id' => $feeStructure->fee_head_id,
+                    'fee_structure_id' => $feeStructure->getKey(),
+                    'billing_period_type' => 'month',
+                    'billing_period_key' => $currentPeriod,
+                    'period_start' => now()->startOfMonth()->toDateString(),
+                    'period_end' => now()->endOfMonth()->toDateString(),
+                    'is_advance' => false,
+                    'charge_amount' => $chargeAmount,
+                    'due_before' => $chargeAmount,
+                    'paid_amount' => $paidAmount,
+                    'due_after' => max($chargeAmount - $paidAmount, 0),
+                    'notes' => 'Seeded current-month partial payment.',
+                ]);
+
+                return;
+            }
+
+            if ($index === 1) {
+                Payment::query()
+                    ->where('tenant_id', $tenant->getKey())
+                    ->where('student_id', $student->getKey())
+                    ->delete();
+
+                return;
+            }
+
+            $payment = Payment::query()->updateOrCreate(
+                [
+                    'tenant_id' => $tenant->getKey(),
+                    'receipt_no' => 'RCT-'.now()->format('Ym').'-'.str_pad((string) ($tenant->getKey() + 1000), 4, '0', STR_PAD_LEFT),
+                ],
+                [
+                    'student_id' => $student->getKey(),
+                    'student_enrollment_id' => $enrollment?->getKey(),
+                    'batch_id' => $enrollment?->batch_id,
+                    'owner_teacher_id' => $enrollment?->batch?->owner_teacher_id ?? $student->owner_teacher_id,
+                    'collector_id' => $collector->getKey(),
+                    'collector_role' => 'admin',
+                    'payment_method' => Payment::METHOD_MOBILE_BANKING,
+                    'collected_on' => now()->subDay(),
+                    'total_amount' => $chargeAmount,
+                    'status' => Payment::STATUS_RECEIVED,
+                    'notes' => 'Seeded advance payment for next period.',
+                ]
+            );
+
+            $payment->items()->delete();
+            $payment->items()->create([
+                'tenant_id' => $tenant->getKey(),
+                'fee_head_id' => $feeStructure->fee_head_id,
+                'fee_structure_id' => $feeStructure->getKey(),
+                'billing_period_type' => 'month',
+                'billing_period_key' => $nextPeriod,
+                'period_start' => now()->addMonth()->startOfMonth()->toDateString(),
+                'period_end' => now()->addMonth()->endOfMonth()->toDateString(),
+                'is_advance' => true,
+                'charge_amount' => $chargeAmount,
+                'due_before' => $chargeAmount,
+                'paid_amount' => $chargeAmount,
+                'due_after' => 0,
+                'notes' => 'Seeded advance payment item.',
+            ]);
+        });
+    }
+
+    protected function seedDueLedger(Tenant $tenant): void
+    {
+        $periods = [
+            now()->format('Y-m'),
+            now()->addMonth()->format('Y-m'),
+        ];
+
+        foreach ($periods as $periodKey) {
+            $this->dueLedgerService->generateMonthlyForTenant($tenant, $periodKey);
+        }
+    }
+
+    protected function seedPostPaymentActions(Tenant $tenant): void
+    {
+        PaymentPostAction::query()->where('tenant_id', $tenant->getKey())->delete();
+
+        Payment::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->with('tenant')
+            ->get()
+            ->each(function (Payment $payment): void {
+                $this->paymentPostActionService->queueForPayment($payment, false);
+
+                $payment->postActions()->get()->each(function (PaymentPostAction $action): void {
+                    $this->paymentPostActionService->process($action);
+                });
+            });
     }
 }

@@ -75,6 +75,21 @@ class Batch extends Model
             ->withTimestamps();
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function dues(): HasMany
+    {
+        return $this->hasMany(StudentDue::class);
+    }
+
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class);
+    }
+
     public function scopeVisibleTo($query, User $user)
     {
         if ($user->isSuperAdmin()) {

@@ -69,4 +69,9 @@ class FeeHead extends Model
     {
         return $this->hasMany(FeeStructure::class);
     }
+
+    public function paymentItems(): HasMany
+    {
+        return $this->hasMany(PaymentItem::class);
+    }
 }
