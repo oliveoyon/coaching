@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Collection;
 
 class Enrollment extends Model
 {
@@ -59,6 +59,14 @@ class Enrollment extends Model
     }
 
     /**
+     * Get attendance rows for this enrollment.
+     */
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
+    /**
      * Get active fee items configured for the enrolled batch.
      */
     public function activeBatchFees(): HasMany
@@ -99,5 +107,32 @@ class Enrollment extends Model
         $runningTotal = $this->approvedPaidForFee($batchFee, $month) + $this->pendingPaidForFee($batchFee, $month);
 
         return max(0, $feeAmount - $runningTotal);
+    }
+
+    /**
+     * Decide whether a fee should be visible for the selected billing month.
+     */
+    public function isFeeBillableForMonth(BatchFee $batchFee, string $month): bool
+    {
+        $periodStart = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $periodEnd = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+
+        if ($this->start_date && $this->start_date->gt($periodEnd)) {
+            return false;
+        }
+
+        if ($batchFee->feeType?->frequency === 'monthly') {
+            return ! $this->end_date || $this->end_date->gte($periodStart);
+        }
+
+        return true;
+    }
+
+    /**
+     * Return the stored billing month for this fee type.
+     */
+    public function billingMonthForFee(BatchFee $batchFee, string $month): ?string
+    {
+        return $batchFee->feeType?->frequency === 'monthly' ? $month : null;
     }
 }

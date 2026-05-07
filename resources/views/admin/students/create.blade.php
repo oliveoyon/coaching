@@ -2,7 +2,7 @@
 
 @section('title', 'Admit Student')
 @section('page-title', 'Admit Student')
-@section('page-subtitle', 'Create a student record first. Batch enrollment will be handled separately.')
+@section('page-subtitle', 'Add a new student')
 
 @section('content')
     <div class="card page-card">

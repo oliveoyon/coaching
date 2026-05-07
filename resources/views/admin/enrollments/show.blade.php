@@ -2,14 +2,14 @@
 
 @section('title', 'Enrollment Details')
 @section('page-title', 'Enrollment Details')
-@section('page-subtitle', 'Review batch participation history and current withdrawal status.')
+@section('page-subtitle', 'View student and batch details.')
 
 @section('content')
     <div class="row g-4">
         <div class="col-lg-7">
             <div class="card page-card h-100">
                 <div class="card-body p-4">
-                    <h2 class="h5 mb-4">Enrollment Summary</h2>
+                    <h2 class="h5 mb-4">Enrollment</h2>
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -48,7 +48,7 @@
         <div class="col-lg-5">
             <div class="card page-card mb-4">
                 <div class="card-body p-4">
-                    <h2 class="h5 mb-3">Batch Teachers</h2>
+                    <h2 class="h5 mb-3">Teachers</h2>
                     <div class="d-flex flex-column gap-2">
                         @foreach ($enrollment->batch?->teachers ?? [] as $teacher)
                             <div class="border rounded-3 px-3 py-2">
@@ -62,7 +62,7 @@
 
             <div class="card page-card">
                 <div class="card-body p-4">
-                    <h2 class="h5 mb-3">Student Contact</h2>
+                    <h2 class="h5 mb-3">Contact</h2>
                     <div class="small text-muted mb-1">Guardian Phone</div>
                     <div class="fw-semibold mb-3">{{ $enrollment->student?->guardian_phone }}</div>
 

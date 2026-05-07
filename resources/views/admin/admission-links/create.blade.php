@@ -2,7 +2,7 @@
 
 @section('title', 'Create Admission Link')
 @section('page-title', 'Create Admission Link')
-@section('page-subtitle', 'This link will be shared in a specific batch WhatsApp group for self-submitted student admission requests.')
+@section('page-subtitle', 'Create a shareable link for one batch.')
 
 @section('content')
     <div class="card page-card">
@@ -10,38 +10,40 @@
             <form method="POST" action="{{ route('admin.admission-links.store') }}">
                 @csrf
 
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label for="batch_id" class="form-label">Batch</label>
-                        <select name="batch_id" id="batch_id" class="form-select @error('batch_id') is-invalid @enderror" required>
-                            <option value="">Select batch</option>
-                            @foreach ($batches as $batch)
-                                <option value="{{ $batch->id }}" @selected((string) old('batch_id', $selectedBatchId ?? '') === (string) $batch->id)>
-                                    {{ $batch->name }} ({{ $batch->academicClass?->name }}@if($batch->subject) - {{ $batch->subject?->name }}@endif)
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('batch_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                <div class="border rounded-4 p-4 mb-4">
+                    <h2 class="h5 mb-3">Link Details</h2>
 
-                    <div class="col-md-6">
-                        <label for="title" class="form-label">Link Title</label>
-                        <input type="text" name="title" id="title" value="{{ old('title') }}" class="form-control @error('title') is-invalid @enderror" placeholder="Optional">
-                        <div class="form-text">Example: April admission, waiting list, or re-admission.</div>
-                        @error('title')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label for="batch_id" class="form-label">Batch</label>
+                            <select name="batch_id" id="batch_id" class="form-select @error('batch_id') is-invalid @enderror" required>
+                                <option value="">Select batch</option>
+                                @foreach ($batches as $batch)
+                                    <option value="{{ $batch->id }}" @selected((string) old('batch_id', $selectedBatchId ?? '') === (string) $batch->id)>
+                                        {{ $batch->name }} ({{ $batch->academicClass?->name }}@if($batch->subject) - {{ $batch->subject?->name }}@endif)
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('batch_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                    <div class="col-md-4">
-                        <label for="expires_at" class="form-label">Expiry Date & Time</label>
-                        <input type="datetime-local" name="expires_at" id="expires_at" value="{{ old('expires_at') }}" class="form-control @error('expires_at') is-invalid @enderror">
-                        <div class="form-text">Optional. Leave blank to keep the link open.</div>
-                        @error('expires_at')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <div class="col-md-6">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" name="title" id="title" value="{{ old('title') }}" class="form-control @error('title') is-invalid @enderror" placeholder="Optional">
+                            @error('title')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="expires_at" class="form-label">Expiry</label>
+                            <input type="datetime-local" name="expires_at" id="expires_at" value="{{ old('expires_at') }}" class="form-control @error('expires_at') is-invalid @enderror">
+                            @error('expires_at')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 

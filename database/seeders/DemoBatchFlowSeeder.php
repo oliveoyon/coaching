@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\AcademicClass;
 use App\Models\AdmissionRequest;
+use App\Models\AttendanceSession;
 use App\Models\Batch;
 use App\Models\BatchAdmissionLink;
 use App\Models\BatchFee;
@@ -13,6 +14,7 @@ use App\Models\Expense;
 use App\Models\FeeType;
 use App\Models\Payment;
 use App\Models\Student;
+use App\Models\StudentFaceRegistration;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\TeacherSettlement;
@@ -20,6 +22,7 @@ use App\Models\TeacherSettlementItem;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use App\Services\AttendanceSessionService;
 use App\Services\IncomeDistributionService;
 use App\Services\TeacherSettlementService;
 
@@ -34,6 +37,8 @@ class DemoBatchFlowSeeder extends Seeder
         Expense::query()->delete();
         AdmissionRequest::query()->delete();
         BatchAdmissionLink::query()->delete();
+        AttendanceSession::query()->delete();
+        StudentFaceRegistration::query()->delete();
         Enrollment::query()->delete();
         TeacherSettlementItem::query()->delete();
         TeacherSettlement::query()->delete();
@@ -325,6 +330,32 @@ class DemoBatchFlowSeeder extends Seeder
             ],
         );
 
+        StudentFaceRegistration::updateOrCreate(
+            ['student_id' => $studentOne->id, 'status' => 'verified'],
+            [
+                'admission_request_id' => null,
+                'capture_path' => null,
+                'capture_method' => 'live_camera',
+                'captured_at' => now()->subDays(20),
+                'verified_by' => $superAdmin->id,
+                'verified_at' => now()->subDays(19),
+                'note' => 'Demo verified face registration for attendance flow.',
+            ],
+        );
+
+        StudentFaceRegistration::updateOrCreate(
+            ['student_id' => $studentTwo->id, 'status' => 'verified'],
+            [
+                'admission_request_id' => null,
+                'capture_path' => null,
+                'capture_method' => 'live_camera',
+                'captured_at' => now()->subDays(18),
+                'verified_by' => $superAdmin->id,
+                'verified_at' => now()->subDays(17),
+                'note' => 'Demo verified face registration for attendance flow.',
+            ],
+        );
+
         $studentOneCombinedEnrollment = Enrollment::where('student_id', $studentOne->id)
             ->where('batch_id', $classEightCombined->id)
             ->firstOrFail();
@@ -528,5 +559,33 @@ class DemoBatchFlowSeeder extends Seeder
                 'created_by' => $admin->id,
             ],
         );
+
+        $attendanceService = app(AttendanceSessionService::class);
+
+        $combinedSession = $attendanceService->open($classEightCombined, '2026-04-24', $teacherUserOne->id, 'face');
+        $combinedSession->records()
+            ->where('student_id', $studentOne->id)
+            ->update([
+                'status' => 'present',
+                'method' => 'face',
+                'marked_by' => $teacherUserOne->id,
+                'marked_at' => now()->subDays(5),
+                'confidence_score' => 91.50,
+            ]);
+        $combinedSession->update([
+            'status' => 'completed',
+            'completed_at' => now()->subDays(5),
+        ]);
+
+        $chemistrySession = $attendanceService->open($chemistryBatch, '2026-04-25', $teacherUserTwo->id, 'qr');
+        $chemistrySession->records()
+            ->where('student_id', $studentTwo->id)
+            ->update([
+                'status' => 'late',
+                'method' => 'qr',
+                'marked_by' => $teacherUserTwo->id,
+                'marked_at' => now()->subDays(4),
+                'scan_code' => 'STD0002',
+            ]);
     }
 }

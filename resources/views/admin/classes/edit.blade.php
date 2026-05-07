@@ -2,7 +2,7 @@
 
 @section('title', 'Edit Class')
 @section('page-title', 'Edit Class')
-@section('page-subtitle', 'Update academic class master data.')
+@section('page-subtitle', 'Update class')
 
 @section('content')
     <div class="card page-card">

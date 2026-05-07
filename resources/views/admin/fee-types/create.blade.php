@@ -2,7 +2,7 @@
 
 @section('title', 'Create Fee Type')
 @section('page-title', 'Create Fee Type')
-@section('page-subtitle', 'Create reusable fee heads before assigning them to batches.')
+@section('page-subtitle', 'Add a new fee type')
 
 @section('content')
     <div class="card page-card">

@@ -1,10 +1,37 @@
 @extends('layouts.admin')
 
-@section('title', 'Enrollment History')
+@section('title', 'Enrollments')
 @section('page-title', auth()->user()->can('manage enrollments') ? 'Enrollment Management' : 'My Student Enrollments')
-@section('page-subtitle', 'Admission and enrollment stay separate so future billing can follow active batch participation only.')
+@section('page-subtitle', 'View active and withdrawn enrollments.')
 
 @section('content')
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card page-card h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-2">Results</div>
+                    <div class="h4 mb-0">{{ $enrollments->total() }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-2">Active on This Page</div>
+                    <div class="h4 mb-0">{{ $enrollments->getCollection()->where('status', 'active')->count() }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-2">Withdrawn on This Page</div>
+                    <div class="h4 mb-0">{{ $enrollments->getCollection()->where('status', 'withdrawn')->count() }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card page-card">
         <div class="card-body p-4">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
@@ -29,7 +56,7 @@
 
                 @can('manage enrollments')
                     <a href="{{ route('admin.enrollments.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-1"></i> Enroll Student
+                        <i class="bi bi-plus-circle me-1"></i> New Enrollment
                     </a>
                 @endcan
             </div>
@@ -82,7 +109,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">No enrollment records found.</td>
+                                <td colspan="7" class="text-center py-5 text-muted">No enrollments found.</td>
                             </tr>
                         @endforelse
                     </tbody>

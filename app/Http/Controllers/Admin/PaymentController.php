@@ -111,8 +111,7 @@ class PaymentController extends Controller
             ->flatMap(function (Enrollment $enrollment) use ($dashboardMonth) {
                 return $enrollment->batch?->batchFees?->where('status', 'active')
                     ->map(function (BatchFee $batchFee) use ($enrollment, $dashboardMonth) {
-                        $isMonthly = $batchFee->feeType?->frequency === 'monthly';
-                        $summary = $this->feeSummary($enrollment, $batchFee, $isMonthly ? $dashboardMonth : null);
+                        $summary = $this->feeSummary($enrollment, $batchFee, $dashboardMonth);
 
                         if ($summary['remaining'] <= 0) {
                             return null;
@@ -388,10 +387,20 @@ class PaymentController extends Controller
     /**
      * Build payment summary for a billing month.
      */
-    public function feeSummary(Enrollment $enrollment, BatchFee $batchFee, ?string $month = null): array
+    public function feeSummary(Enrollment $enrollment, BatchFee $batchFee, string $month): array
     {
-        $approved = $enrollment->approvedPaidForFee($batchFee, $month);
-        $pending = $enrollment->pendingPaidForFee($batchFee, $month);
+        if (! $enrollment->isFeeBillableForMonth($batchFee, $month)) {
+            return [
+                'fee' => (float) $batchFee->amount,
+                'approved' => 0,
+                'pending' => 0,
+                'remaining' => 0,
+            ];
+        }
+
+        $billingMonth = $enrollment->billingMonthForFee($batchFee, $month);
+        $approved = $enrollment->approvedPaidForFee($batchFee, $billingMonth);
+        $pending = $enrollment->pendingPaidForFee($batchFee, $billingMonth);
         $fee = (float) $batchFee->amount;
 
         return [
@@ -426,7 +435,7 @@ class PaymentController extends Controller
                     ?->where('status', 'active')
                     ->map(function (BatchFee $batchFee) use ($enrollment, $month) {
                         $isMonthly = $batchFee->feeType?->frequency === 'monthly';
-                        $summary = $this->feeSummary($enrollment, $batchFee, $isMonthly ? $month : null);
+                        $summary = $this->feeSummary($enrollment, $batchFee, $month);
 
                         return [
                             'batch_fee' => $batchFee,

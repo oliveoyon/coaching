@@ -63,6 +63,22 @@ class Student extends Model
     }
 
     /**
+     * Get saved face registration captures for the student.
+     */
+    public function faceRegistrations(): HasMany
+    {
+        return $this->hasMany(StudentFaceRegistration::class);
+    }
+
+    /**
+     * Get attendance rows across the student's enrollments.
+     */
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
+    /**
      * Get payments through enrollment history.
      */
     public function payments(): HasManyThrough

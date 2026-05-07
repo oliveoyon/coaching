@@ -2,7 +2,7 @@
 
 @section('title', 'Edit User')
 @section('page-title', 'Edit User')
-@section('page-subtitle', 'Update user details and adjust role access cleanly.')
+@section('page-subtitle', 'Update user details and access.')
 
 @section('content')
     <div class="card page-card">

@@ -23,11 +23,11 @@ class RolePermissionSeeder extends Seeder
             'manage students',
             'manage batches',
             'manage enrollments',
+            'manage attendance',
             'collect payments',
             'approve payments',
             'manage fee setup',
             'settle teacher payments',
-            'manage payments',
             'manage expenses',
             'view reports',
         ];
@@ -50,15 +50,16 @@ class RolePermissionSeeder extends Seeder
             'manage students',
             'manage batches',
             'manage enrollments',
+            'manage attendance',
             'collect payments',
             'approve payments',
             'manage fee setup',
             'settle teacher payments',
-            'manage payments',
             'manage expenses',
             'view reports',
         ]);
         $teacherRole->syncPermissions([
+            'manage attendance',
             'collect payments',
             'view reports',
         ]);
@@ -67,7 +68,6 @@ class RolePermissionSeeder extends Seeder
             'approve payments',
             'manage fee setup',
             'settle teacher payments',
-            'manage payments',
             'manage expenses',
             'view reports',
         ]);
@@ -76,11 +76,16 @@ class RolePermissionSeeder extends Seeder
             ['email' => 'superadmin@example.com'],
             [
                 'name' => 'Super Admin',
+                'username' => 'superadmin',
                 'password' => Hash::make('password'),
                 'status' => 'active',
                 'email_verified_at' => now(),
             ],
         );
+
+        if (! $superAdmin->username) {
+            $superAdmin->forceFill(['username' => 'superadmin'])->saveQuietly();
+        }
 
         if (! $superAdmin->hasRole('Super Admin')) {
             $superAdmin->assignRole('Super Admin');

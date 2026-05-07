@@ -2,7 +2,7 @@
 
 @section('title', 'Create Teacher')
 @section('page-title', 'Create Teacher')
-@section('page-subtitle', 'Create a teacher record with a linked user account.')
+@section('page-subtitle', 'Add a new teacher')
 
 @section('content')
     <div class="card page-card">

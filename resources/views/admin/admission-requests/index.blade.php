@@ -2,13 +2,40 @@
 
 @section('title', 'Admission Requests')
 @section('page-title', 'Admission Requests')
-@section('page-subtitle', 'Review public student submissions before creating or linking student records and enrolling them.')
+@section('page-subtitle', 'Review student admission requests.')
 
 @section('content')
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card page-card h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-2">Total Requests</div>
+                    <div class="h4 mb-0">{{ $requests->total() }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-2">Pending on This Page</div>
+                    <div class="h4 mb-0">{{ $requests->getCollection()->where('status', 'pending')->count() }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-2">Approved on This Page</div>
+                    <div class="h4 mb-0">{{ $requests->getCollection()->where('status', 'approved')->count() }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card page-card">
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <a href="{{ route('admin.admission-links.index') }}" class="btn btn-outline-secondary">Back to Admission Links</a>
+                <a href="{{ route('admin.admission-links.index') }}" class="btn btn-outline-secondary">Back to Links</a>
             </div>
 
             <div class="table-responsive">
@@ -17,7 +44,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Batch</th>
-                            <th>Guardian WhatsApp</th>
+                            <th>Guardian</th>
                             <th>Status</th>
                             <th>Submitted</th>
                             <th class="text-end">Action</th>

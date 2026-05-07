@@ -2,7 +2,7 @@
 
 @section('title', 'Create User')
 @section('page-title', 'Create User')
-@section('page-subtitle', 'Add a system user and assign the appropriate role.')
+@section('page-subtitle', 'Add a new system user.')
 
 @section('content')
     <div class="card page-card">

@@ -75,9 +75,10 @@ class BatchController extends Controller
             'subject_id' => $validated['subject_id'] ?? null,
             'monthly_fee' => $validated['monthly_fee'],
             'distribution_type' => $validated['distribution_type'],
-            'schedule_days' => $validated['schedule_days'] ?? null,
-            'start_time' => $validated['start_time'] ?? null,
-            'end_time' => $validated['end_time'] ?? null,
+            'schedule_days' => $this->legacyScheduleDays($validated['schedule_slots'] ?? []),
+            'start_time' => $this->legacyScheduleTime($validated['schedule_slots'] ?? [], 'start_time'),
+            'end_time' => $this->legacyScheduleTime($validated['schedule_slots'] ?? [], 'end_time'),
+            'schedule_slots' => $this->normalizedScheduleSlots($validated['schedule_slots'] ?? []),
             'status' => $validated['status'],
         ]);
 
@@ -116,9 +117,10 @@ class BatchController extends Controller
             'subject_id' => $validated['subject_id'] ?? null,
             'monthly_fee' => $validated['monthly_fee'],
             'distribution_type' => $validated['distribution_type'],
-            'schedule_days' => $validated['schedule_days'] ?? null,
-            'start_time' => $validated['start_time'] ?? null,
-            'end_time' => $validated['end_time'] ?? null,
+            'schedule_days' => $this->legacyScheduleDays($validated['schedule_slots'] ?? []),
+            'start_time' => $this->legacyScheduleTime($validated['schedule_slots'] ?? [], 'start_time'),
+            'end_time' => $this->legacyScheduleTime($validated['schedule_slots'] ?? [], 'end_time'),
+            'schedule_slots' => $this->normalizedScheduleSlots($validated['schedule_slots'] ?? []),
             'status' => $validated['status'],
         ]);
 
@@ -190,5 +192,53 @@ class BatchController extends Controller
                 ->select('teachers.*')
                 ->get(),
         ];
+    }
+
+    /**
+     * Normalize schedule slot rows.
+     *
+     * @param  array<int, array<string, mixed>>  $scheduleSlots
+     * @return array<int, array<string, string>>|null
+     */
+    protected function normalizedScheduleSlots(array $scheduleSlots): ?array
+    {
+        $slots = collect($scheduleSlots)
+            ->map(fn ($slot) => [
+                'day' => trim((string) ($slot['day'] ?? '')),
+                'start_time' => trim((string) ($slot['start_time'] ?? '')),
+                'end_time' => trim((string) ($slot['end_time'] ?? '')),
+            ])
+            ->filter(fn ($slot) => $slot['day'] !== '' && $slot['start_time'] !== '' && $slot['end_time'] !== '')
+            ->values()
+            ->all();
+
+        return $slots === [] ? null : $slots;
+    }
+
+    /**
+     * Build legacy day storage for compatibility.
+     *
+     * @param  array<int, array<string, mixed>>  $scheduleSlots
+     * @return array<int, string>|null
+     */
+    protected function legacyScheduleDays(array $scheduleSlots): ?array
+    {
+        $days = collect($this->normalizedScheduleSlots($scheduleSlots) ?? [])
+            ->pluck('day')
+            ->unique()
+            ->values()
+            ->all();
+
+        return $days === [] ? null : $days;
+    }
+
+    /**
+     * Build legacy first slot time for compatibility.
+     *
+     * @param  array<int, array<string, mixed>>  $scheduleSlots
+     */
+    protected function legacyScheduleTime(array $scheduleSlots, string $key): ?string
+    {
+        return $this->normalizedScheduleSlots($scheduleSlots)[0][$key] ?? null;
     }
 }

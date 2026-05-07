@@ -2,7 +2,7 @@
 
 @section('title', 'Create Class')
 @section('page-title', 'Create Class')
-@section('page-subtitle', 'Add a new academic class.')
+@section('page-subtitle', 'Add a new class')
 
 @section('content')
     <div class="card page-card">

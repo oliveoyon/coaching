@@ -2,14 +2,14 @@
 
 @section('title', 'Expenses')
 @section('page-title', 'Expense Management')
-@section('page-subtitle', 'Track common and teacher-specific expenses with monthly finance visibility.')
+@section('page-subtitle', 'Track common and teacher expenses.')
 
 @section('content')
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card page-card h-100">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-2">{{ $month }} Total Expense</div>
+                    <div class="text-muted small mb-2">{{ $month }} Total</div>
                     <div class="h4 mb-0">{{ number_format($monthlySummary['total'], 2) }}</div>
                 </div>
             </div>
@@ -17,7 +17,7 @@
         <div class="col-md-4">
             <div class="card page-card h-100">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-2">{{ $month }} Common Expense</div>
+                    <div class="text-muted small mb-2">{{ $month }} Common</div>
                     <div class="h4 mb-0">{{ number_format($monthlySummary['common'], 2) }}</div>
                 </div>
             </div>
@@ -25,7 +25,7 @@
         <div class="col-md-4">
             <div class="card page-card h-100">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-2">{{ $month }} Teacher Expense</div>
+                    <div class="text-muted small mb-2">{{ $month }} Teacher</div>
                     <div class="h4 mb-0">{{ number_format($monthlySummary['teacher'], 2) }}</div>
                 </div>
             </div>
@@ -57,10 +57,10 @@
                     </div>
                 </form>
 
-                <a href="{{ route('admin.expenses.create') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-1"></i> Add Expense
-                </a>
-            </div>
+                    <a href="{{ route('admin.expenses.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> New Expense
+                    </a>
+                </div>
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -90,7 +90,7 @@
                                 <td>{{ $expense->creator?->name ?: '-' }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('admin.expenses.edit', $expense) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                                    <form method="POST" action="{{ route('admin.expenses.destroy', $expense) }}" class="d-inline" onsubmit="return confirm('Delete this expense entry?');">
+                                    <form method="POST" action="{{ route('admin.expenses.destroy', $expense) }}" class="d-inline" onsubmit="return confirm('Delete this expense?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>

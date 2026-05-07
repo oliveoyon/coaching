@@ -38,10 +38,10 @@ class BatchRequest extends FormRequest
             ],
             'monthly_fee' => ['required', 'numeric', 'min:0'],
             'distribution_type' => ['required', Rule::in(['single', 'equal'])],
-            'schedule_days' => ['nullable', 'array'],
-            'schedule_days.*' => ['required', Rule::in(['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'])],
-            'start_time' => ['nullable', 'date_format:H:i'],
-            'end_time' => ['nullable', 'date_format:H:i'],
+            'schedule_slots' => ['nullable', 'array'],
+            'schedule_slots.*.day' => ['nullable', Rule::in(['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'])],
+            'schedule_slots.*.start_time' => ['nullable', 'date_format:H:i'],
+            'schedule_slots.*.end_time' => ['nullable', 'date_format:H:i'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'teacher_ids' => ['required', 'array', 'min:1'],
             'teacher_ids.*' => ['required', 'integer', 'distinct', Rule::exists('teachers', 'id')],
@@ -73,24 +73,34 @@ class BatchRequest extends FormRequest
                     // continue schedule validation even if teachers fail
                 }
 
-                $startTime = $this->input('start_time');
-                $endTime = $this->input('end_time');
-                $scheduleDays = collect($this->input('schedule_days', []))->filter()->values();
+                $scheduleSlots = collect($this->input('schedule_slots', []))
+                    ->map(fn ($slot) => [
+                        'day' => trim((string) ($slot['day'] ?? '')),
+                        'start_time' => trim((string) ($slot['start_time'] ?? '')),
+                        'end_time' => trim((string) ($slot['end_time'] ?? '')),
+                    ])
+                    ->filter(fn ($slot) => $slot['day'] !== '' || $slot['start_time'] !== '' || $slot['end_time'] !== '')
+                    ->values();
 
-                if (($startTime && ! $endTime) || (! $startTime && $endTime)) {
-                    $validator->errors()->add('start_time', 'Both start time and end time are required if schedule time is provided.');
-                }
+                $duplicateSlots = [];
 
-                if ($startTime && $endTime && $startTime >= $endTime) {
-                    $validator->errors()->add('end_time', 'End time must be later than start time.');
-                }
+                foreach ($scheduleSlots as $index => $slot) {
+                    if ($slot['day'] === '' || $slot['start_time'] === '' || $slot['end_time'] === '') {
+                        $validator->errors()->add("schedule_slots.{$index}.day", 'Each schedule row needs day, start time, and end time.');
+                        continue;
+                    }
 
-                if (($startTime || $endTime) && $scheduleDays->isEmpty()) {
-                    $validator->errors()->add('schedule_days', 'Select at least one class day when schedule time is provided.');
-                }
+                    if ($slot['start_time'] >= $slot['end_time']) {
+                        $validator->errors()->add("schedule_slots.{$index}.end_time", 'End time must be later than start time.');
+                    }
 
-                if ($scheduleDays->isNotEmpty() && (! $startTime || ! $endTime)) {
-                    $validator->errors()->add('start_time', 'Start time and end time are required when class days are selected.');
+                    $slotKey = implode('|', [$slot['day'], $slot['start_time'], $slot['end_time']]);
+
+                    if (in_array($slotKey, $duplicateSlots, true)) {
+                        $validator->errors()->add("schedule_slots.{$index}.day", 'Duplicate schedule row found.');
+                    }
+
+                    $duplicateSlots[] = $slotKey;
                 }
 
                 if ($teacherIds->isEmpty()) {

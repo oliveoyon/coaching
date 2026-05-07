@@ -6,7 +6,8 @@
 
 @section('content')
     @php
-        $dayLabels = collect($batch->schedule_days ?? [])->map(fn ($day) => match ($day) {
+        $scheduleEntries = collect($batch->schedule_entries ?? []);
+        $formatDay = fn ($day) => match ($day) {
             'sat' => 'Saturday',
             'sun' => 'Sunday',
             'mon' => 'Monday',
@@ -15,7 +16,7 @@
             'thu' => 'Thursday',
             'fri' => 'Friday',
             default => ucfirst($day),
-        })->implode(', ');
+        };
     @endphp
     <div class="row g-4">
         <div class="col-lg-8">
@@ -61,19 +62,26 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="text-muted small mb-1">Class Days</div>
-                            <div class="fw-semibold">{{ $dayLabels ?: 'Not set' }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="text-muted small mb-1">Class Time</div>
-                            <div class="fw-semibold">
-                                @if ($batch->start_time || $batch->end_time)
-                                    {{ $batch->start_time?->format('h:i A') ?: '-' }} - {{ $batch->end_time?->format('h:i A') ?: '-' }}
-                                @else
-                                    Not set
-                                @endif
-                            </div>
+                        <div class="col-12">
+                            <div class="text-muted small mb-2">Schedule</div>
+                            @if ($scheduleEntries->isNotEmpty())
+                                <div class="row g-2">
+                                    @foreach ($scheduleEntries as $entry)
+                                        <div class="col-md-6">
+                                            <div class="border rounded-3 px-3 py-2">
+                                                <div class="fw-semibold">{{ $formatDay($entry['day']) }}</div>
+                                                <div class="small text-muted">
+                                                    {{ \Carbon\Carbon::createFromFormat('H:i', $entry['start_time'])->format('h:i A') }}
+                                                    -
+                                                    {{ \Carbon\Carbon::createFromFormat('H:i', $entry['end_time'])->format('h:i A') }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="fw-semibold">Not set</div>
+                            @endif
                         </div>
                     </div>
                 </div>

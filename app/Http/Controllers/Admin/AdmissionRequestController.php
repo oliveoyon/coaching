@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\RejectAdmissionRequest;
 use App\Models\AdmissionRequest;
 use App\Models\Enrollment;
 use App\Models\Student;
+use App\Models\StudentFaceRegistration;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -122,6 +123,15 @@ class AdmissionRequestController extends Controller
                 'reviewed_by' => $request->user()->id,
                 'reviewed_at' => now(),
             ]);
+
+            StudentFaceRegistration::query()
+                ->where('admission_request_id', $admissionRequest->id)
+                ->update([
+                    'student_id' => $student->id,
+                    'status' => 'verified',
+                    'verified_by' => $request->user()->id,
+                    'verified_at' => now(),
+                ]);
         });
 
         return redirect()
@@ -142,6 +152,16 @@ class AdmissionRequestController extends Controller
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
         ]);
+
+        StudentFaceRegistration::query()
+            ->where('admission_request_id', $admissionRequest->id)
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'rejected',
+                'verified_by' => $request->user()->id,
+                'verified_at' => now(),
+                'note' => $request->input('review_note'),
+            ]);
 
         return redirect()
             ->route('admin.admission-requests.show', $admissionRequest)

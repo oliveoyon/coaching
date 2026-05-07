@@ -25,11 +25,12 @@ class UserController extends Controller
             ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'Teacher'))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
-                    $subQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhereHas('roles', function ($roleQuery) use ($search) {
-                            $roleQuery->where('name', 'like', "%{$search}%");
+                        $subQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('username', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhereHas('roles', function ($roleQuery) use ($search) {
+                                $roleQuery->where('name', 'like', "%{$search}%");
                         });
                 });
             })
@@ -62,6 +63,7 @@ class UserController extends Controller
 
         $user = User::create([
             'name' => $validated['name'],
+            'username' => $validated['username'],
             'email' => $validated['email'],
             'password' => $validated['password'],
             'status' => $validated['status'],
@@ -109,6 +111,7 @@ class UserController extends Controller
 
         $user->fill([
             'name' => $validated['name'],
+            'username' => $validated['username'],
             'email' => $validated['email'],
             'status' => $validated['status'],
         ]);

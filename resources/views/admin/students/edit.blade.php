@@ -2,7 +2,7 @@
 
 @section('title', 'Edit Student')
 @section('page-title', 'Edit Student')
-@section('page-subtitle', 'Update admission details while keeping the student record intact for future batch enrollments.')
+@section('page-subtitle', 'Update student')
 
 @section('content')
     <div class="card page-card">

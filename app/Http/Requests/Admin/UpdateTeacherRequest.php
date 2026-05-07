@@ -27,6 +27,13 @@ class UpdateTeacherRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255'],
+            'username' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[A-Za-z0-9_.-]+$/',
+                Rule::unique('users', 'username')->ignore($teacher?->user_id),
+            ],
             'email' => [
                 'required',
                 'string',

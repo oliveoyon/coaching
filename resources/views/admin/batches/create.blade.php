@@ -2,7 +2,7 @@
 
 @section('title', 'Create Batch')
 @section('page-title', 'Create Batch')
-@section('page-subtitle', 'Set up a batch with class, optional subject, fee, and teacher assignment.')
+@section('page-subtitle', 'Add a new batch')
 
 @section('content')
     <div class="card page-card">

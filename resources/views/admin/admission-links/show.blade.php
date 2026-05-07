@@ -2,14 +2,14 @@
 
 @section('title', 'Admission Link Details')
 @section('page-title', 'Admission Link Details')
-@section('page-subtitle', 'Share this link in the batch WhatsApp group and monitor incoming requests.')
+@section('page-subtitle', 'Share the link and review new requests.')
 
 @section('content')
     <div class="row g-4">
         <div class="col-lg-5">
             <div class="card page-card">
                 <div class="card-body p-4">
-                    <h2 class="h5 mb-3">Link Information</h2>
+                    <h2 class="h5 mb-3">Link</h2>
 
                     <div class="mb-3">
                         <div class="text-muted small">Batch</div>
@@ -38,7 +38,7 @@
                             </span>
                         </div>
                         <div class="col-md-6">
-                            <div class="text-muted small">Expires</div>
+                            <div class="text-muted small">Expiry</div>
                             <div class="fw-semibold">{{ $admissionLink->expires_at?->format('d M Y h:i A') ?: 'No expiry' }}</div>
                         </div>
                     </div>
@@ -51,7 +51,7 @@
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="h5 mb-0">Recent Requests</h2>
-                        <a href="{{ route('admin.admission-requests.index') }}" class="btn btn-sm btn-outline-secondary">All Requests</a>
+                        <a href="{{ route('admin.admission-requests.index') }}" class="btn btn-sm btn-outline-secondary">View All</a>
                     </div>
 
                     <div class="table-responsive">

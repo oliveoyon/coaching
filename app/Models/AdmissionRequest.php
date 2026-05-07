@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AdmissionRequest extends Model
 {
@@ -60,5 +61,13 @@ class AdmissionRequest extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Get linked face captures from the public admission flow.
+     */
+    public function faceRegistrations(): HasMany
+    {
+        return $this->hasMany(StudentFaceRegistration::class);
     }
 }

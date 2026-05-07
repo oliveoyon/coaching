@@ -2,7 +2,7 @@
 
 @section('title', 'Payment Operations')
 @section('page-title', 'Payment Operations')
-@section('page-subtitle', 'Collect faster, review pending MFS, follow up grouped dues, and open full history only when needed.')
+@section('page-subtitle', 'Collect, review, and track payments.')
 
 @section('content')
     <div class="row g-4 mb-4">
@@ -11,7 +11,6 @@
                 <div class="card-body p-4">
                     <div class="text-muted small mb-2">Today Approved Collection</div>
                     <div class="h3 mb-1">{{ number_format($summaryCards['today_collected'], 2) }}</div>
-                    <div class="small text-muted">Based on approved payments dated today</div>
                 </div>
             </div>
         </div>
@@ -20,7 +19,6 @@
                 <div class="card-body p-4">
                     <div class="text-muted small mb-2">Pending MFS</div>
                     <div class="h3 mb-1">{{ $summaryCards['pending_count'] }}</div>
-                    <div class="small text-muted">bKash and Nagad items waiting for approval</div>
                 </div>
             </div>
         </div>
@@ -29,7 +27,6 @@
                 <div class="card-body p-4">
                     <div class="text-muted small mb-2">{{ $dashboardMonth }} Approved</div>
                     <div class="h3 mb-1">{{ number_format($summaryCards['month_approved'], 2) }}</div>
-                    <div class="small text-muted">Approved by payment date in the selected month</div>
                 </div>
             </div>
         </div>
@@ -38,7 +35,6 @@
                 <div class="card-body p-4">
                     <div class="text-muted small mb-2">{{ $dashboardMonth }} Due Students</div>
                     <div class="h3 mb-1">{{ $summaryCards['due_student_count'] }}</div>
-                    <div class="small text-muted">Students still carrying grouped dues this month</div>
                 </div>
             </div>
         </div>
@@ -67,13 +63,12 @@
                 <div class="card-body p-4">
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-8">
-                            <label for="quick-search" class="form-label">Quick Student Search</label>
+                            <label for="quick-search" class="form-label">Find Student</label>
                             <form method="GET" action="{{ route('admin.payments.create') }}" class="input-group">
                                 <input type="text" id="quick-search" name="student_search" class="form-control" placeholder="Type student code, phone, guardian phone, name, or batch keyword">
                                 <input type="month" name="month" value="{{ $dashboardMonth }}" class="form-control" style="max-width: 180px;">
                                 <button type="submit" class="btn btn-primary">Find & Collect</button>
                             </form>
-                            <div class="form-text">Example: entering <strong>003</strong> should bring matching student code or phone patterns quickly.</div>
                         </div>
                         <div class="col-lg-4">
                             <div class="d-grid gap-2 d-lg-flex justify-content-lg-end">
@@ -91,8 +86,8 @@
                 <div class="card page-card mb-4">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 class="h5 mb-0">Pending MFS Approval Queue</h2>
-                            <a href="{{ route('admin.payments.index', ['status' => 'pending', 'tab' => 'history']) }}" class="btn btn-sm btn-outline-secondary">Open Full Pending History</a>
+                            <h2 class="h5 mb-0">Pending Approval</h2>
+                            <a href="{{ route('admin.payments.index', ['status' => 'pending', 'tab' => 'history']) }}" class="btn btn-sm btn-outline-secondary">Open Full List</a>
                         </div>
 
                         @forelse ($pendingPayments as $date => $datePayments)
@@ -154,15 +149,14 @@
                 </div>
             </div>
         @endcan
-        </div>
 
         <div class="tab-pane fade {{ $activeTab === 'due' ? 'show active' : '' }}" id="due-tab-pane" role="tabpanel">
             <div class="card page-card mb-4">
                 <div class="card-body p-4">
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
                         <div>
-                            <h2 class="h5 mb-1">Grouped Due Follow-Up</h2>
-                            <div class="text-muted small">Grouped by batch for {{ $dashboardMonth }} so accounts can follow up operationally instead of scanning a long table.</div>
+                            <h2 class="h5 mb-1">Grouped Due</h2>
+                            <div class="text-muted small">By batch for {{ $dashboardMonth }}</div>
                         </div>
                         <a href="{{ route('admin.payments.due-list', ['month' => $dashboardMonth]) }}" class="btn btn-outline-secondary">Open Detailed Due List</a>
                     </div>

@@ -2,7 +2,7 @@
 
 @section('title', 'Edit Fee Type')
 @section('page-title', 'Edit Fee Type')
-@section('page-subtitle', 'Update the reusable fee head and frequency behavior.')
+@section('page-subtitle', 'Update fee type')
 
 @section('content')
     <div class="card page-card">

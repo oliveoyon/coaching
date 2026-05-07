@@ -2,26 +2,71 @@
 
 @section('title', 'Teacher Management')
 @section('page-title', 'Teacher Management')
-@section('page-subtitle', 'Manage teacher master records linked with login accounts.')
+@section('page-subtitle', 'Manage teachers')
 
 @section('content')
+    @php
+        $activeCount = $teachers->getCollection()->where('status', 'active')->count();
+        $inactiveCount = $teachers->getCollection()->where('status', 'inactive')->count();
+        $batchCount = $teachers->getCollection()->sum('batches_count');
+    @endphp
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card page-card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-1">This Page</div>
+                    <div class="fs-3 fw-semibold">{{ $teachers->count() }}</div>
+                    <div class="small text-muted">Visible teachers</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card page-card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-1">Active</div>
+                    <div class="fs-3 fw-semibold text-success">{{ $activeCount }}</div>
+                    <div class="small text-muted">Ready to use</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card page-card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-1">Inactive</div>
+                    <div class="fs-3 fw-semibold text-secondary">{{ $inactiveCount }}</div>
+                    <div class="small text-muted">Not active now</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card page-card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-1">Assigned Batches</div>
+                    <div class="fs-3 fw-semibold text-primary">{{ $batchCount }}</div>
+                    <div class="small text-muted">On this page</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card page-card">
         <div class="card-body p-4">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-                <form method="GET" action="{{ route('admin.teachers.index') }}" class="row g-2 w-100 w-lg-auto">
-                    <div class="col-12 col-md-auto">
+                <form method="GET" action="{{ route('admin.teachers.index') }}" class="row g-2 flex-grow-1">
+                    <div class="col-12 col-lg-6">
                         <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="Search teacher name or email">
                     </div>
-                    <div class="col-6 col-md-auto">
+                    <div class="col-6 col-lg-auto">
                         <button type="submit" class="btn btn-outline-primary w-100">Search</button>
                     </div>
-                    <div class="col-6 col-md-auto">
+                    <div class="col-6 col-lg-auto">
                         <a href="{{ route('admin.teachers.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
                     </div>
                 </form>
 
                 <a href="{{ route('admin.teachers.create') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-1"></i> Add Teacher
+                    <i class="bi bi-plus-circle me-1"></i> New Teacher
                 </a>
             </div>
 
@@ -40,7 +85,10 @@
                     <tbody>
                         @forelse ($teachers as $teacher)
                             <tr>
-                                <td class="fw-semibold">{{ $teacher->user?->name }}</td>
+                                <td>
+                                    <div class="fw-semibold">{{ $teacher->user?->name }}</div>
+                                    <div class="small text-muted">{{ $teacher->user?->email }}</div>
+                                </td>
                                 <td>{{ $teacher->user?->email }}</td>
                                 <td>
                                     <span class="badge rounded-pill {{ $teacher->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">

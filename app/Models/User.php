@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'status'])]
+#[Fillable(['name', 'username', 'email', 'password', 'status'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -100,6 +100,22 @@ class User extends Authenticatable
     public function teacherSettlements(): HasMany
     {
         return $this->hasMany(TeacherSettlement::class, 'paid_by');
+    }
+
+    /**
+     * Get attendance sessions opened by this user.
+     */
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class, 'created_by');
+    }
+
+    /**
+     * Get attendance rows marked by this user.
+     */
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class, 'marked_by');
     }
 
 }

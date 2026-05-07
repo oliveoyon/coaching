@@ -18,6 +18,7 @@ class Batch extends Model
         'schedule_days',
         'start_time',
         'end_time',
+        'schedule_slots',
         'status',
     ];
 
@@ -28,7 +29,42 @@ class Batch extends Model
             'schedule_days' => 'array',
             'start_time' => 'datetime:H:i',
             'end_time' => 'datetime:H:i',
+            'schedule_slots' => 'array',
         ];
+    }
+
+    /**
+     * Get normalized schedule entries for this batch.
+     *
+     * @return array<int, array<string, string>>
+     */
+    public function getScheduleEntriesAttribute(): array
+    {
+        $slots = collect($this->schedule_slots ?? [])
+            ->filter(fn ($slot) => filled($slot['day'] ?? null) && filled($slot['start_time'] ?? null) && filled($slot['end_time'] ?? null))
+            ->map(fn ($slot) => [
+                'day' => (string) $slot['day'],
+                'start_time' => (string) $slot['start_time'],
+                'end_time' => (string) $slot['end_time'],
+            ])
+            ->values()
+            ->all();
+
+        if ($slots !== []) {
+            return $slots;
+        }
+
+        $days = collect($this->schedule_days ?? [])->filter()->values();
+
+        if ($days->isEmpty() || ! $this->start_time || ! $this->end_time) {
+            return [];
+        }
+
+        return $days->map(fn ($day) => [
+            'day' => (string) $day,
+            'start_time' => $this->start_time?->format('H:i') ?? '',
+            'end_time' => $this->end_time?->format('H:i') ?? '',
+        ])->all();
     }
 
     /**
@@ -87,5 +123,13 @@ class Batch extends Model
     public function batchFees(): HasMany
     {
         return $this->hasMany(BatchFee::class);
+    }
+
+    /**
+     * Get attendance sessions opened for this batch.
+     */
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class);
     }
 }

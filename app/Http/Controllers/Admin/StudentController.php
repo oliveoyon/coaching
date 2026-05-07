@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StudentRequest;
 use App\Models\AcademicClass;
+use App\Models\AttendanceRecord;
 use App\Models\Student;
 use Illuminate\Support\Collection;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +22,9 @@ class StudentController extends Controller
     public function index(Request $request): View
     {
         $search = trim((string) $request->string('search'));
+        $classId = $request->integer('class_id');
+        $status = (string) $request->string('status');
+        $hasFilters = $search !== '' || $classId > 0 || in_array($status, ['active', 'inactive'], true);
 
         $students = Student::query()
             ->with('academicClass')
@@ -33,11 +37,25 @@ class StudentController extends Controller
                         ->orWhere('guardian_phone', 'like', "%{$search}%");
                 });
             })
+            ->when($classId > 0, fn ($query) => $query->where('class_id', $classId))
+            ->when(in_array($status, ['active', 'inactive'], true), fn ($query) => $query->where('status', $status))
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.students.index', compact('students', 'search'));
+        return view('admin.students.index', [
+            'students' => $hasFilters ? $students : null,
+            'search' => $search,
+            'classId' => $classId,
+            'status' => $status,
+            'hasFilters' => $hasFilters,
+            'classes' => AcademicClass::query()->where('status', 'active')->orderBy('name')->get(),
+            'studentStats' => [
+                'total' => Student::query()->count(),
+                'active' => Student::query()->where('status', 'active')->count(),
+                'inactive' => Student::query()->where('status', 'inactive')->count(),
+            ],
+        ]);
     }
 
     /**
@@ -81,7 +99,10 @@ class StudentController extends Controller
         abort_unless($this->canAccessStudentProfile($request, $student), Response::HTTP_FORBIDDEN);
 
         $month = (string) $request->string('month') ?: now()->format('Y-m');
-        $student->load('academicClass');
+        $student->load([
+            'academicClass',
+            'faceRegistrations' => fn ($query) => $query->latest('verified_at')->latest('captured_at'),
+        ]);
 
         $enrollments = $this->scopedEnrollmentsForProfile($request, $student)
             ->with([
@@ -125,7 +146,23 @@ class StudentController extends Controller
             })
             ->values();
 
+        $attendanceHistory = AttendanceRecord::query()
+            ->with(['session.batch', 'marker'])
+            ->where('student_id', $student->id)
+            ->when($request->user()->hasRole('Teacher') && ! $request->user()->can('manage attendance'), function ($query) use ($request) {
+                $teacher = $request->user()->teacherProfile;
+
+                if ($teacher) {
+                    $query->whereHas('session.batch.teachers', fn ($teacherQuery) => $teacherQuery->where('teachers.id', $teacher->id));
+                }
+            })
+            ->latest('marked_at')
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
         $feeSummaryRows = $this->buildStudentFeeSummaryRows($enrollments->where('status', 'active'), $month);
+        $latestFaceRegistration = $student->faceRegistrations->first();
 
         $profileSummary = [
             'active_enrollments' => $enrollments->where('status', 'active')->count(),
@@ -144,9 +181,13 @@ class StudentController extends Controller
             'total_approved' => (float) $paymentHistory->where('status', 'approved')->sum('amount'),
             'total_pending' => (float) $paymentHistory->where('status', 'pending')->sum('amount'),
             'payment_count' => $paymentHistory->count(),
+            'face_registration_status' => $latestFaceRegistration?->status ?: 'missing',
+            'attendance_present' => (int) $attendanceHistory->where('status', 'present')->count(),
+            'attendance_late' => (int) $attendanceHistory->where('status', 'late')->count(),
+            'attendance_absent' => (int) $attendanceHistory->where('status', 'absent')->count(),
         ];
 
-        return view('admin.students.show', compact('student', 'enrollments', 'paymentHistory', 'paymentGroups', 'feeSummaryRows', 'profileSummary', 'month'));
+        return view('admin.students.show', compact('student', 'enrollments', 'paymentHistory', 'paymentGroups', 'feeSummaryRows', 'profileSummary', 'month', 'latestFaceRegistration', 'attendanceHistory'));
     }
 
     /**
@@ -262,7 +303,11 @@ class StudentController extends Controller
             ->flatMap(function ($enrollment) use ($month) {
                 return $enrollment->batch?->batchFees?->where('status', 'active')
                     ->map(function ($batchFee) use ($enrollment, $month) {
-                        $billingMonth = $batchFee->feeType?->frequency === 'monthly' ? $month : null;
+                        if (! $enrollment->isFeeBillableForMonth($batchFee, $month)) {
+                            return null;
+                        }
+
+                        $billingMonth = $enrollment->billingMonthForFee($batchFee, $month);
 
                         return [
                             'enrollment' => $enrollment,
@@ -274,7 +319,8 @@ class StudentController extends Controller
                             'pending' => $enrollment->pendingPaidForFee($batchFee, $billingMonth),
                             'remaining' => $enrollment->remainingForFee($batchFee, $billingMonth),
                         ];
-                    }) ?? collect();
+                    })
+                    ->filter() ?? collect();
             })
             ->sortBy([
                 ['batch_name', 'asc'],

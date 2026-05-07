@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BatchAdmissionLinkController;
 use App\Http\Controllers\Admin\BatchFeeController;
 use App\Http\Controllers\Admin\AcademicClassController;
 use App\Http\Controllers\Admin\AdmissionRequestController;
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\DistributionController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\EnrollmentController;
@@ -22,7 +23,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
 });
 
 Route::get('/apply/{token}', [PublicAdmissionController::class, 'create'])->name('admission.apply');
@@ -81,6 +84,16 @@ Route::middleware(['auth', 'role_or_permission:Teacher|manage enrollments'])->gr
     Route::get('/admin/enrollments/{enrollment}', [EnrollmentController::class, 'show'])->name('admin.enrollments.show');
     Route::get('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdrawForm'])->name('admin.enrollments.withdraw.form');
     Route::patch('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdraw'])->name('admin.enrollments.withdraw');
+});
+
+Route::middleware(['auth', 'role_or_permission:Teacher|manage attendance'])->group(function () {
+    Route::get('/admin/attendance', [AttendanceController::class, 'index'])->name('admin.attendance.index');
+    Route::get('/admin/attendance/create', [AttendanceController::class, 'create'])->name('admin.attendance.create');
+    Route::post('/admin/attendance', [AttendanceController::class, 'store'])->name('admin.attendance.store');
+    Route::get('/admin/attendance/{attendance}', [AttendanceController::class, 'show'])->name('admin.attendance.show');
+    Route::patch('/admin/attendance/{attendance}/records/{record}', [AttendanceController::class, 'mark'])->name('admin.attendance.records.mark');
+    Route::post('/admin/attendance/{attendance}/scan', [AttendanceController::class, 'scan'])->name('admin.attendance.scan');
+    Route::patch('/admin/attendance/{attendance}/complete', [AttendanceController::class, 'complete'])->name('admin.attendance.complete');
 });
 
 Route::middleware(['auth', 'permission:manage enrollments'])->group(function () {

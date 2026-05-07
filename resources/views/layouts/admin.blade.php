@@ -165,7 +165,8 @@
         $isStudentMenuOpen = request()->routeIs('admin.students.*')
             || request()->routeIs('admin.enrollments.*')
             || request()->routeIs('admin.admission-links.*')
-            || request()->routeIs('admin.admission-requests.*');
+            || request()->routeIs('admin.admission-requests.*')
+            || request()->routeIs('admin.attendance.*');
         $isFinanceMenuOpen = request()->routeIs('admin.payments.*')
             || request()->routeIs('admin.fee-types.*')
             || request()->routeIs('admin.batch-fees.*')
@@ -187,7 +188,7 @@
                 <a href="{{ route('dashboard') }}" class="brand-link fs-5">Coaching CMS</a>
             </div>
 
-            <div class="small text-uppercase text-white-50 fw-semibold mb-3">Navigation</div>
+            {{-- <div class="small text-uppercase text-white-50 fw-semibold mb-3">Navigation</div> --}}
 
             <nav class="nav flex-column">
                 <div class="menu-section">
@@ -199,11 +200,11 @@
 
                 @if (auth()->user()->hasAnyRole(['Super Admin', 'Admin']) || auth()->user()->can('manage batches') || auth()->user()->hasRole('Teacher'))
                     <div class="menu-section">
-                        <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Academic</div>
+                        {{-- <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Academic</div> --}}
                         <a class="nav-link menu-toggle {{ $isAcademicMenuOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#desktopAcademicMenu" role="button" aria-expanded="{{ $isAcademicMenuOpen ? 'true' : 'false' }}" aria-controls="desktopAcademicMenu">
                             <span class="d-flex align-items-center gap-2">
                                 <i class="bi bi-building"></i>
-                                <span>Academic Setup</span>
+                                <span>Academic</span>
                             </span>
                             <i class="bi bi-chevron-down small"></i>
                         </a>
@@ -232,11 +233,11 @@
 
                 @if (auth()->user()->can('manage students') || auth()->user()->can('manage enrollments') || auth()->user()->hasRole('Teacher'))
                     <div class="menu-section">
-                        <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Students</div>
+                        {{-- <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Students</div> --}}
                         <a class="nav-link menu-toggle {{ $isStudentMenuOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#desktopStudentMenu" role="button" aria-expanded="{{ $isStudentMenuOpen ? 'true' : 'false' }}" aria-controls="desktopStudentMenu">
                             <span class="d-flex align-items-center gap-2">
                                 <i class="bi bi-mortarboard"></i>
-                                <span>Students & Enrollments</span>
+                                <span>Students</span>
                             </span>
                             <i class="bi bi-chevron-down small"></i>
                         </a>
@@ -251,23 +252,31 @@
                                 <i class="bi bi-person-lines-fill"></i>
                                 <span>{{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage enrollments') ? 'My Students' : 'Enrollment Management' }}</span>
                             </a>
+                            <a href="{{ route('admin.attendance.index') }}" class="nav-link {{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">
+                                <i class="bi bi-check2-square"></i>
+                                <span>{{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage attendance') ? 'My Attendance' : 'Attendance' }}</span>
+                            </a>
                             @if (auth()->user()->can('manage enrollments'))
-                                <a href="{{ route('admin.admission-links.index') }}" class="nav-link {{ request()->routeIs('admin.admission-links.*') || request()->routeIs('admin.admission-requests.*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.admission-links.index') }}" class="nav-link {{ request()->routeIs('admin.admission-links.*') ? 'active' : '' }}">
                                     <i class="bi bi-link-45deg"></i>
-                                    <span>Public Admissions</span>
+                                    <span>Admission Links</span>
+                                </a>
+                                <a href="{{ route('admin.admission-requests.index') }}" class="nav-link {{ request()->routeIs('admin.admission-requests.*') ? 'active' : '' }}">
+                                    <i class="bi bi-card-checklist"></i>
+                                    <span>Admission Requests</span>
                                 </a>
                             @endif
                         </div>
                     </div>
                 @endif
 
-                @if (auth()->user()->canany(['collect payments', 'approve payments', 'manage fee setup', 'settle teacher payments']) || auth()->user()->can('manage expenses'))
+                @if (auth()->user()->canany(['collect payments', 'approve payments', 'manage fee setup', 'settle teacher payments']) || auth()->user()->can('manage expenses') || auth()->user()->hasRole('Teacher'))
                     <div class="menu-section">
-                        <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Finance</div>
+                        {{-- <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Finance</div> --}}
                         <a class="nav-link menu-toggle {{ $isFinanceMenuOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#desktopFinanceMenu" role="button" aria-expanded="{{ $isFinanceMenuOpen ? 'true' : 'false' }}" aria-controls="desktopFinanceMenu">
                             <span class="d-flex align-items-center gap-2">
                                 <i class="bi bi-cash-stack"></i>
-                                <span>Finance & Collection</span>
+                                <span>Finance</span>
                             </span>
                             <i class="bi bi-chevron-down small"></i>
                         </a>
@@ -302,31 +311,27 @@
                                     <span>Expense Management</span>
                                 </a>
                             @endcan
+                            @if (auth()->user()->hasRole('Teacher'))
+                                <a href="{{ route('teacher.earnings.index') }}" class="nav-link {{ request()->routeIs('teacher.earnings.*') ? 'active' : '' }}">
+                                    <i class="bi bi-cash-coin"></i>
+                                    <span>My Earnings</span>
+                                </a>
+                                <a href="{{ route('teacher.settlements.index') }}" class="nav-link {{ request()->routeIs('teacher.settlements.*') ? 'active' : '' }}">
+                                    <i class="bi bi-bank"></i>
+                                    <span>My Settlements</span>
+                                </a>
+                            @endif
                         </div>
-                    </div>
-                @endif
-
-                @if (auth()->user()->hasRole('Teacher'))
-                    <div class="menu-section">
-                        <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Finance</div>
-                        <a href="{{ route('teacher.earnings.index') }}" class="nav-link {{ request()->routeIs('teacher.earnings.*') ? 'active' : '' }}">
-                            <i class="bi bi-cash-coin"></i>
-                            <span>My Earnings</span>
-                        </a>
-                        <a href="{{ route('teacher.settlements.index') }}" class="nav-link {{ request()->routeIs('teacher.settlements.*') ? 'active' : '' }}">
-                            <i class="bi bi-bank"></i>
-                            <span>My Settlements</span>
-                        </a>
                     </div>
                 @endif
 
                 @if (auth()->user()->can('manage users') || auth()->user()->hasAnyRole(['Super Admin', 'Admin']))
                     <div class="menu-section">
-                        <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Administration</div>
+                        {{-- <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Administration</div> --}}
                         <a class="nav-link menu-toggle {{ $isAdminMenuOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#desktopAdminMenu" role="button" aria-expanded="{{ $isAdminMenuOpen ? 'true' : 'false' }}" aria-controls="desktopAdminMenu">
                             <span class="d-flex align-items-center gap-2">
                                 <i class="bi bi-shield-lock"></i>
-                                <span>Access & Settings</span>
+                                <span>Settings</span>
                             </span>
                             <i class="bi bi-chevron-down small"></i>
                         </a>
@@ -349,11 +354,11 @@
 
                 @if (auth()->user()->can('view reports') || auth()->user()->hasRole('Teacher'))
                     <div class="menu-section">
-                        <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Reports</div>
+                        {{-- <div class="menu-label text-uppercase text-white-50 fw-semibold mb-2">Reports</div> --}}
                         <a class="nav-link menu-toggle {{ $isReportMenuOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#desktopReportMenu" role="button" aria-expanded="{{ $isReportMenuOpen ? 'true' : 'false' }}" aria-controls="desktopReportMenu">
                             <span class="d-flex align-items-center gap-2">
                                 <i class="bi bi-bar-chart"></i>
-                                <span>Report Center</span>
+                                <span>Reports</span>
                             </span>
                             <i class="bi bi-chevron-down small"></i>
                         </a>
@@ -474,7 +479,7 @@
 
                 @if (auth()->user()->hasAnyRole(['Super Admin', 'Admin']) || auth()->user()->can('manage batches') || auth()->user()->hasRole('Teacher'))
                     <button class="btn btn-link nav-link text-white text-decoration-none text-start d-flex justify-content-between {{ $isAcademicMenuOpen ? 'active bg-white bg-opacity-10' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#mobileAcademicMenu" aria-expanded="{{ $isAcademicMenuOpen ? 'true' : 'false' }}">
-                        <span>Academic Setup</span>
+                        <span>Academic</span>
                         <i class="bi bi-chevron-down small"></i>
                     </button>
                     <div class="collapse {{ $isAcademicMenuOpen ? 'show' : '' }}" id="mobileAcademicMenu">
@@ -493,7 +498,7 @@
 
                 @if (auth()->user()->can('manage students') || auth()->user()->can('manage enrollments') || auth()->user()->hasRole('Teacher'))
                     <button class="btn btn-link nav-link text-white text-decoration-none text-start d-flex justify-content-between {{ $isStudentMenuOpen ? 'active bg-white bg-opacity-10' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#mobileStudentMenu" aria-expanded="{{ $isStudentMenuOpen ? 'true' : 'false' }}">
-                        <span>Students & Enrollments</span>
+                        <span>Students</span>
                         <i class="bi bi-chevron-down small"></i>
                     </button>
                     <div class="collapse {{ $isStudentMenuOpen ? 'show' : '' }}" id="mobileStudentMenu">
@@ -504,16 +509,20 @@
                             <a href="{{ route('admin.enrollments.index') }}" class="nav-link text-white {{ request()->routeIs('admin.enrollments.*') ? 'active bg-white bg-opacity-10' : '' }}">
                                 {{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage enrollments') ? 'My Students' : 'Enrollment Management' }}
                             </a>
+                            <a href="{{ route('admin.attendance.index') }}" class="nav-link text-white {{ request()->routeIs('admin.attendance.*') ? 'active bg-white bg-opacity-10' : '' }}">
+                                {{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage attendance') ? 'My Attendance' : 'Attendance' }}
+                            </a>
                             @if (auth()->user()->can('manage enrollments'))
-                                <a href="{{ route('admin.admission-links.index') }}" class="nav-link text-white {{ request()->routeIs('admin.admission-links.*') || request()->routeIs('admin.admission-requests.*') ? 'active bg-white bg-opacity-10' : '' }}">Public Admissions</a>
+                                <a href="{{ route('admin.admission-links.index') }}" class="nav-link text-white {{ request()->routeIs('admin.admission-links.*') ? 'active bg-white bg-opacity-10' : '' }}">Admission Links</a>
+                                <a href="{{ route('admin.admission-requests.index') }}" class="nav-link text-white {{ request()->routeIs('admin.admission-requests.*') ? 'active bg-white bg-opacity-10' : '' }}">Admission Requests</a>
                             @endif
                         </div>
                     </div>
                 @endif
 
-                @if (auth()->user()->canany(['collect payments', 'approve payments', 'manage fee setup', 'settle teacher payments']) || auth()->user()->can('manage expenses'))
+                @if (auth()->user()->canany(['collect payments', 'approve payments', 'manage fee setup', 'settle teacher payments']) || auth()->user()->can('manage expenses') || auth()->user()->hasRole('Teacher'))
                     <button class="btn btn-link nav-link text-white text-decoration-none text-start d-flex justify-content-between {{ $isFinanceMenuOpen ? 'active bg-white bg-opacity-10' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#mobileFinanceMenu" aria-expanded="{{ $isFinanceMenuOpen ? 'true' : 'false' }}">
-                        <span>Finance & Collection</span>
+                        <span>Finance</span>
                         <i class="bi bi-chevron-down small"></i>
                     </button>
                     <div class="collapse {{ $isFinanceMenuOpen ? 'show' : '' }}" id="mobileFinanceMenu">
@@ -533,18 +542,17 @@
                             @can('manage expenses')
                                 <a href="{{ route('admin.expenses.index') }}" class="nav-link text-white {{ request()->routeIs('admin.expenses.*') ? 'active bg-white bg-opacity-10' : '' }}">Expense Management</a>
                             @endcan
+                            @if (auth()->user()->hasRole('Teacher'))
+                                <a href="{{ route('teacher.earnings.index') }}" class="nav-link text-white {{ request()->routeIs('teacher.earnings.*') ? 'active bg-white bg-opacity-10' : '' }}">My Earnings</a>
+                                <a href="{{ route('teacher.settlements.index') }}" class="nav-link text-white {{ request()->routeIs('teacher.settlements.*') ? 'active bg-white bg-opacity-10' : '' }}">My Settlements</a>
+                            @endif
                         </div>
                     </div>
                 @endif
 
-                @if (auth()->user()->hasRole('Teacher'))
-                    <a href="{{ route('teacher.earnings.index') }}" class="nav-link text-white {{ request()->routeIs('teacher.earnings.*') ? 'active bg-white bg-opacity-10' : '' }}">My Earnings</a>
-                    <a href="{{ route('teacher.settlements.index') }}" class="nav-link text-white {{ request()->routeIs('teacher.settlements.*') ? 'active bg-white bg-opacity-10' : '' }}">My Settlements</a>
-                @endif
-
                 @if (auth()->user()->can('manage users') || auth()->user()->hasAnyRole(['Super Admin', 'Admin']))
                     <button class="btn btn-link nav-link text-white text-decoration-none text-start d-flex justify-content-between {{ $isAdminMenuOpen ? 'active bg-white bg-opacity-10' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#mobileAdminMenu" aria-expanded="{{ $isAdminMenuOpen ? 'true' : 'false' }}">
-                        <span>Access & Settings</span>
+                        <span>Settings</span>
                         <i class="bi bi-chevron-down small"></i>
                     </button>
                     <div class="collapse {{ $isAdminMenuOpen ? 'show' : '' }}" id="mobileAdminMenu">
@@ -561,7 +569,7 @@
 
                 @if (auth()->user()->can('view reports') || auth()->user()->hasRole('Teacher'))
                     <button class="btn btn-link nav-link text-white text-decoration-none text-start d-flex justify-content-between {{ $isReportMenuOpen ? 'active bg-white bg-opacity-10' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#mobileReportMenu" aria-expanded="{{ $isReportMenuOpen ? 'true' : 'false' }}">
-                        <span>Report Center</span>
+                        <span>Reports</span>
                         <i class="bi bi-chevron-down small"></i>
                     </button>
                     <div class="collapse {{ $isReportMenuOpen ? 'show' : '' }}" id="mobileReportMenu">

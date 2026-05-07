@@ -18,7 +18,7 @@ class BatchAdmissionLinkController extends Controller
     public function index(): View
     {
         $links = BatchAdmissionLink::query()
-            ->with(['batch.academicClass', 'batch.subject', 'creator'])
+            ->with(['batch.academicClass', 'batch.subject', 'batch.teachers.user', 'creator'])
             ->withCount(['admissionRequests', 'admissionRequests as pending_requests_count' => fn ($query) => $query->where('status', 'pending')])
             ->latest()
             ->paginate(12);

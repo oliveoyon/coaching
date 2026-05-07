@@ -2,7 +2,7 @@
 
 @section('title', 'Edit Teacher')
 @section('page-title', 'Edit Teacher')
-@section('page-subtitle', 'Update teacher profile and linked login account details.')
+@section('page-subtitle', 'Update teacher')
 
 @section('content')
     <div class="card page-card">
