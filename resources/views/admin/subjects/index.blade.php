@@ -11,30 +11,19 @@
     @endphp
 
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">This Page</div>
-                    <div class="fs-3 fw-semibold">{{ $subjects->count() }}</div>
-                    <div class="small text-muted">Visible subjects</div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">
+                <div class="card-body p-3">
+                    <div class="text-success-emphasis small fw-semibold mb-1">Active</div>
+                    <div class="fs-4 fw-bold text-success">{{ $activeCount }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Active</div>
-                    <div class="fs-3 fw-semibold text-success">{{ $activeCount }}</div>
-                    <div class="small text-muted">Ready to use</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Inactive</div>
-                    <div class="fs-3 fw-semibold text-secondary">{{ $inactiveCount }}</div>
-                    <div class="small text-muted">Hidden from active flow</div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #f5f3ff 0%, #e9d5ff 100%);">
+                <div class="card-body p-3">
+                    <div class="text-secondary small fw-semibold mb-1">Inactive</div>
+                    <div class="fs-4 fw-bold text-secondary">{{ $inactiveCount }}</div>
                 </div>
             </div>
         </div>
@@ -75,7 +64,6 @@
                             <tr>
                                 <td>
                                     <div class="fw-semibold">{{ $subject->name }}</div>
-                                    <div class="small text-muted">Created {{ $subject->created_at?->format('d M Y') }}</div>
                                 </td>
                                 <td>
                                     <span class="badge rounded-pill {{ $subject->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">

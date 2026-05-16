@@ -13,29 +13,26 @@
 
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Monthly</div>
-                    <div class="fs-3 fw-semibold text-primary">{{ $monthlyCount }}</div>
-                    <div class="small text-muted">Example: tuition</div>
+                    <div class="small fw-semibold text-primary mb-2">Monthly</div>
+                    <div class="fs-3 fw-semibold text-dark">{{ $monthlyCount }}</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-1">One Time</div>
-                    <div class="fs-3 fw-semibold text-success">{{ $oneTimeCount }}</div>
-                    <div class="small text-muted">Example: admission</div>
+                    <div class="small fw-semibold text-success mb-2">One Time</div>
+                    <div class="fs-3 fw-semibold text-dark">{{ $oneTimeCount }}</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Manual</div>
-                    <div class="fs-3 fw-semibold text-warning">{{ $manualCount }}</div>
-                    <div class="small text-muted">Example: exam</div>
+                    <div class="small fw-semibold text-warning mb-2">Manual</div>
+                    <div class="fs-3 fw-semibold text-dark">{{ $manualCount }}</div>
                 </div>
             </div>
         </div>
@@ -78,7 +75,6 @@
                             <tr>
                                 <td>
                                     <div class="fw-semibold">{{ $feeType->name }}</div>
-                                    <div class="small text-muted">{{ $feeType->code }}</div>
                                 </td>
                                 <td>{{ $feeType->code }}</td>
                                 <td>

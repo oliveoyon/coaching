@@ -19,26 +19,26 @@
 
     <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="card page-card h-100">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-2">Total Links</div>
-                    <div class="h4 mb-0">{{ $links->total() }}</div>
+                    <div class="small fw-semibold text-primary mb-2">Total Links</div>
+                    <div class="h4 mb-0 text-dark">{{ $links->total() }}</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card page-card h-100">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-2">Open Links</div>
-                    <div class="h4 mb-0">{{ $links->getCollection()->filter(fn ($link) => $link->isOpen())->count() }}</div>
+                    <div class="small fw-semibold text-success mb-2">Open Links</div>
+                    <div class="h4 mb-0 text-dark">{{ $links->getCollection()->filter(fn ($link) => $link->isOpen())->count() }}</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card page-card h-100">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-2">Pending Requests</div>
-                    <div class="h4 mb-0">{{ $links->getCollection()->sum('pending_requests_count') }}</div>
+                    <div class="small fw-semibold text-warning mb-2">Pending Requests</div>
+                    <div class="h4 mb-0 text-dark">{{ $links->getCollection()->sum('pending_requests_count') }}</div>
                 </div>
             </div>
         </div>

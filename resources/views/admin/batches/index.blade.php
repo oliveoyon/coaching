@@ -11,30 +11,19 @@
     @endphp
 
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">This Page</div>
-                    <div class="fs-3 fw-semibold">{{ $batches->count() }}</div>
-                    <div class="small text-muted">Visible batches</div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">
+                <div class="card-body p-3">
+                    <div class="text-success-emphasis small fw-semibold mb-1">Active</div>
+                    <div class="fs-4 fw-bold text-success">{{ $activeCount }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Active</div>
-                    <div class="fs-3 fw-semibold text-success">{{ $activeCount }}</div>
-                    <div class="small text-muted">Running now</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Inactive</div>
-                    <div class="fs-3 fw-semibold text-secondary">{{ $inactiveCount }}</div>
-                    <div class="small text-muted">Not running</div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #f5f3ff 0%, #e9d5ff 100%);">
+                <div class="card-body p-3">
+                    <div class="text-secondary small fw-semibold mb-1">Inactive</div>
+                    <div class="fs-4 fw-bold text-secondary">{{ $inactiveCount }}</div>
                 </div>
             </div>
         </div>
@@ -69,7 +58,6 @@
                             <th>Batch</th>
                             <th>Type</th>
                             <th>Schedule</th>
-                            <th>Fee</th>
                             <th>Teachers</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
@@ -131,7 +119,6 @@
                                         <span class="text-muted">Not set</span>
                                     @endif
                                 </td>
-                                <td>{{ number_format((float) $batch->monthly_fee, 2) }}</td>
                                 <td>
                                     @foreach ($batch->teachers as $teacher)
                                         <span class="badge rounded-pill text-bg-primary-subtle text-primary border border-primary-subtle mb-1">{{ $teacher->user?->name }}</span>
@@ -143,15 +130,18 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('admin.batches.show', $batch) }}" class="btn btn-sm btn-outline-secondary">View</a>
+                                    @can('manage fee setup')
+                                        <a href="{{ route('admin.batch-fees.index', $batch) }}" class="btn btn-sm border-0 text-primary-emphasis" style="background: #dbeafe;">Fees</a>
+                                    @endcan
+                                    <a href="{{ route('admin.batches.show', $batch) }}" class="btn btn-sm border-0 text-secondary-emphasis" style="background: #e5e7eb;">View</a>
                                     @can('manage batches')
-                                        <a href="{{ route('admin.batches.edit', $batch) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                        <a href="{{ route('admin.batches.edit', $batch) }}" class="btn btn-sm border-0 text-success-emphasis" style="background: #dcfce7;">Edit</a>
                                     @endcan
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">No batches found.</td>
+                                <td colspan="6" class="text-center py-5 text-muted">No batches found.</td>
                             </tr>
                         @endforelse
                     </tbody>

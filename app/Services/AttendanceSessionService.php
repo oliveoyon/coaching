@@ -40,14 +40,28 @@ class AttendanceSessionService
                 'started_at' => $session->started_at ?: now(),
             ]);
 
+            $this->syncRoster($session);
+
+            return $session->fresh(['batch.academicClass', 'batch.subject', 'batch.teachers.user']);
+        });
+    }
+
+    /**
+     * Refresh one session roster from current active enrollments.
+     */
+    public function syncRoster(AttendanceSession $session): AttendanceSession
+    {
+        return DB::transaction(function () use ($session): AttendanceSession {
+            $session->loadMissing('batch');
+
             $activeEnrollments = Enrollment::query()
                 ->with('student')
-                ->where('batch_id', $batch->id)
+                ->where('batch_id', $session->batch_id)
                 ->where('status', 'active')
-                ->whereDate('start_date', '<=', $attendanceDate)
-                ->where(function ($query) use ($attendanceDate) {
+                ->whereDate('start_date', '<=', $session->attendance_date->format('Y-m-d'))
+                ->where(function ($query) use ($session) {
                     $query->whereNull('end_date')
-                        ->orWhereDate('end_date', '>=', $attendanceDate);
+                        ->orWhereDate('end_date', '>=', $session->attendance_date->format('Y-m-d'));
                 })
                 ->get();
 
@@ -71,7 +85,7 @@ class AttendanceSessionService
                 );
             }
 
-            return $session->fresh(['batch.academicClass', 'batch.subject', 'batch.teachers.user']);
+            return $session->fresh();
         });
     }
 }

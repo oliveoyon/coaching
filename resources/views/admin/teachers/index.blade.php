@@ -12,39 +12,27 @@
     @endphp
 
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">This Page</div>
-                    <div class="fs-3 fw-semibold">{{ $teachers->count() }}</div>
-                    <div class="small text-muted">Visible teachers</div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">
+                <div class="card-body p-3">
+                    <div class="text-success-emphasis small fw-semibold mb-1">Active</div>
+                    <div class="fs-4 fw-bold text-success">{{ $activeCount }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Active</div>
-                    <div class="fs-3 fw-semibold text-success">{{ $activeCount }}</div>
-                    <div class="small text-muted">Ready to use</div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #f5f3ff 0%, #e9d5ff 100%);">
+                <div class="card-body p-3">
+                    <div class="text-secondary small fw-semibold mb-1">Inactive</div>
+                    <div class="fs-4 fw-bold text-secondary">{{ $inactiveCount }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Inactive</div>
-                    <div class="fs-3 fw-semibold text-secondary">{{ $inactiveCount }}</div>
-                    <div class="small text-muted">Not active now</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Assigned Batches</div>
-                    <div class="fs-3 fw-semibold text-primary">{{ $batchCount }}</div>
-                    <div class="small text-muted">On this page</div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+                <div class="card-body p-3">
+                    <div class="text-primary-emphasis small fw-semibold mb-1">Assigned Batches</div>
+                    <div class="fs-4 fw-bold text-primary">{{ $batchCount }}</div>
                 </div>
             </div>
         </div>
@@ -87,7 +75,6 @@
                             <tr>
                                 <td>
                                     <div class="fw-semibold">{{ $teacher->user?->name }}</div>
-                                    <div class="small text-muted">{{ $teacher->user?->email }}</div>
                                 </td>
                                 <td>{{ $teacher->user?->email }}</td>
                                 <td>

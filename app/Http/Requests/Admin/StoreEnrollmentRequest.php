@@ -54,6 +54,10 @@ class StoreEnrollmentRequest extends FormRequest
                 $validator->errors()->add('batch_id', 'Only active batches can receive new enrollments.');
             }
 
+            if ($batch->batchFees()->count() === 0) {
+                $validator->errors()->add('batch_id', 'Set up batch fees first. If this is a free batch, add the fee items with amount 0.');
+            }
+
             if ($student->class_id !== $batch->class_id) {
                 $validator->errors()->add('batch_id', 'Student class and batch class must match.');
             }

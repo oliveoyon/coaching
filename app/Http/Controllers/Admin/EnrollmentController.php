@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\PromoteEnrollmentRequest;
 use App\Http\Requests\Admin\StoreEnrollmentRequest;
 use App\Http\Requests\Admin\WithdrawEnrollmentRequest;
 use App\Models\Batch;
 use App\Models\Enrollment;
 use App\Models\Student;
+use App\Services\EnrollmentPromotionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -37,7 +39,7 @@ class EnrollmentController extends Controller
                         ->orWhereHas('batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
                 });
             })
-            ->when(in_array($status, ['active', 'withdrawn'], true), fn ($query) => $query->where('status', $status))
+            ->when(in_array($status, ['active', 'withdrawn', 'completed'], true), fn ($query) => $query->where('status', $status))
             ->latest()
             ->paginate(12)
             ->withQueryString();
@@ -48,12 +50,39 @@ class EnrollmentController extends Controller
     /**
      * Show the form for creating a new enrollment.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
         abort_unless(auth()->user()?->can('manage enrollments'), Response::HTTP_FORBIDDEN);
 
+        $studentSearch = trim((string) old('student_search', (string) $request->string('student_search')));
+        $selectedStudentId = (int) old('student_id', $request->integer('student_id'));
+        $changeStudent = old('change_student', $request->boolean('change_student'));
+        $selectedStudent = $selectedStudentId > 0
+            ? Student::query()->with('academicClass')->find($selectedStudentId)
+            : null;
+
+        $students = collect();
+
+        if ($studentSearch !== '' && (! $selectedStudent || $changeStudent)) {
+            $students = Student::query()
+                ->with('academicClass')
+                ->where('status', 'active')
+                ->where(function ($query) use ($studentSearch) {
+                    $query->where('student_code', 'like', "%{$studentSearch}%")
+                        ->orWhere('name', 'like', "%{$studentSearch}%")
+                        ->orWhere('phone', 'like', "%{$studentSearch}%")
+                        ->orWhere('guardian_phone', 'like', "%{$studentSearch}%");
+                })
+                ->orderBy('name')
+                ->limit(20)
+                ->get();
+        }
+
         return view('admin.enrollments.create', [
-            'students' => $this->formStudents(),
+            'students' => $students,
+            'studentSearch' => $studentSearch,
+            'selectedStudent' => $selectedStudent,
+            'changeStudent' => $changeStudent,
             'batches' => $this->formBatches(),
         ]);
     }
@@ -74,6 +103,78 @@ class EnrollmentController extends Controller
         return redirect()
             ->route('admin.enrollments.index')
             ->with('success', 'Student enrolled successfully.');
+    }
+
+    /**
+     * Show the bulk promotion screen.
+     */
+    public function promote(Request $request): View
+    {
+        abort_unless($request->user()?->can('manage enrollments'), Response::HTTP_FORBIDDEN);
+
+        $sourceBatchId = $request->integer('source_batch_id') ?: null;
+        $targetBatchId = $request->integer('target_batch_id') ?: null;
+        $studentSearch = trim((string) $request->string('student_search'));
+
+        $sourceBatch = $sourceBatchId
+            ? Batch::query()->with(['academicClass', 'subject', 'teachers.user'])->find($sourceBatchId)
+            : null;
+
+        $targetBatch = $targetBatchId
+            ? Batch::query()->with(['academicClass', 'subject'])->withCount('batchFees')->find($targetBatchId)
+            : null;
+
+        $sourceEnrollments = collect();
+
+        if ($sourceBatch) {
+            $sourceEnrollments = Enrollment::query()
+                ->with(['student.academicClass', 'batch.academicClass'])
+                ->where('batch_id', $sourceBatch->id)
+                ->where('status', 'active')
+                ->when($studentSearch !== '', function ($query) use ($studentSearch) {
+                    $query->whereHas('student', function ($studentQuery) use ($studentSearch) {
+                        $studentQuery->where(function ($subQuery) use ($studentSearch) {
+                            $subQuery
+                                ->where('students.student_code', 'like', "%{$studentSearch}%")
+                                ->orWhere('students.name', 'like', "%{$studentSearch}%")
+                                ->orWhere('students.phone', 'like', "%{$studentSearch}%")
+                                ->orWhere('students.guardian_phone', 'like', "%{$studentSearch}%");
+                        });
+                    });
+                })
+                ->get()
+                ->sortBy(fn (Enrollment $enrollment) => $enrollment->student?->name)
+                ->values();
+        }
+
+        return view('admin.enrollments.promote', [
+            'sourceBatchId' => $sourceBatchId,
+            'targetBatchId' => $targetBatchId,
+            'studentSearch' => $studentSearch,
+            'sourceBatch' => $sourceBatch,
+            'targetBatch' => $targetBatch,
+            'sourceEnrollments' => $sourceEnrollments,
+            'sourceBatches' => $this->promotionBatches(),
+            'targetBatches' => $this->promotionBatches(),
+        ]);
+    }
+
+    /**
+     * Store promoted enrollments in bulk.
+     */
+    public function storePromotion(PromoteEnrollmentRequest $request, EnrollmentPromotionService $promotionService): RedirectResponse
+    {
+        $result = $promotionService->promote(
+            enrollmentIds: $request->collect('enrollment_ids')->map(fn ($id) => (int) $id)->all(),
+            targetBatchId: $request->integer('target_batch_id'),
+            startDate: $request->date('start_date'),
+            endedAt: $request->filled('source_end_date') ? $request->date('source_end_date') : null,
+            actorId: $request->user()->id,
+        );
+
+        return redirect()
+            ->route('admin.enrollments.index', ['status' => 'active'])
+            ->with('success', $result['count'].' student'.($result['count'] === 1 ? '' : 's').' promoted successfully.');
     }
 
     /**
@@ -159,24 +260,26 @@ class EnrollmentController extends Controller
     }
 
     /**
-     * Get active students for enrollment form.
-     */
-    protected function formStudents()
-    {
-        return Student::query()
-            ->with('academicClass')
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-    }
-
-    /**
      * Get active batches for enrollment form.
      */
     protected function formBatches()
     {
         return Batch::query()
             ->with(['academicClass', 'subject'])
+            ->withCount('batchFees')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get active batches for promotion source/target selection.
+     */
+    protected function promotionBatches()
+    {
+        return Batch::query()
+            ->with(['academicClass', 'subject', 'teachers.user'])
+            ->withCount('batchFees')
             ->where('status', 'active')
             ->orderBy('name')
             ->get();

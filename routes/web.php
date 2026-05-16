@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\DistributionController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\EnrollmentController;
+use App\Http\Controllers\Admin\EnrollmentFeeAdjustmentController;
 use App\Http\Controllers\Admin\FeeTypeController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportController;
@@ -81,9 +82,14 @@ Route::middleware(['auth', 'role_or_permission:Teacher|manage enrollments'])->gr
     Route::get('/admin/enrollments', [EnrollmentController::class, 'index'])->name('admin.enrollments.index');
     Route::get('/admin/enrollments/create', [EnrollmentController::class, 'create'])->name('admin.enrollments.create');
     Route::post('/admin/enrollments', [EnrollmentController::class, 'store'])->name('admin.enrollments.store');
-    Route::get('/admin/enrollments/{enrollment}', [EnrollmentController::class, 'show'])->name('admin.enrollments.show');
-    Route::get('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdrawForm'])->name('admin.enrollments.withdraw.form');
-    Route::patch('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdraw'])->name('admin.enrollments.withdraw');
+    Route::get('/admin/enrollments/{enrollment}', [EnrollmentController::class, 'show'])->whereNumber('enrollment')->name('admin.enrollments.show');
+    Route::get('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdrawForm'])->whereNumber('enrollment')->name('admin.enrollments.withdraw.form');
+    Route::patch('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdraw'])->whereNumber('enrollment')->name('admin.enrollments.withdraw');
+});
+
+Route::middleware(['auth', 'permission:manage enrollments'])->group(function () {
+    Route::get('/admin/enrollments/promote', [EnrollmentController::class, 'promote'])->name('admin.enrollments.promote');
+    Route::post('/admin/enrollments/promote', [EnrollmentController::class, 'storePromotion'])->name('admin.enrollments.promote.store');
 });
 
 Route::middleware(['auth', 'role_or_permission:Teacher|manage attendance'])->group(function () {
@@ -112,9 +118,17 @@ Route::middleware(['auth', 'permission:manage fee setup'])->group(function () {
     Route::resource('/admin/fee-types', FeeTypeController::class)
         ->except(['show', 'destroy'])
         ->names('admin.fee-types');
+    Route::get('/admin/batch-fee-setup', [BatchFeeController::class, 'directory'])->name('admin.batch-fees.directory');
     Route::get('/admin/batches/{batch}/fees', [BatchFeeController::class, 'index'])->name('admin.batch-fees.index');
     Route::post('/admin/batches/{batch}/fees', [BatchFeeController::class, 'store'])->name('admin.batch-fees.store');
     Route::put('/admin/batches/{batch}/fees/{batch_fee}', [BatchFeeController::class, 'update'])->name('admin.batch-fees.update');
+    Route::post('/admin/batches/{batch}/month-overrides', [BatchFeeController::class, 'storeMonthOverride'])->name('admin.batch-fees.month-overrides.store');
+    Route::delete('/admin/batches/{batch}/month-overrides/{monthOverride}', [BatchFeeController::class, 'destroyMonthOverride'])->name('admin.batch-fees.month-overrides.destroy');
+    Route::post('/admin/batches/{batch}/billing-breaks', [BatchFeeController::class, 'storeBillingBreak'])->name('admin.batch-fees.billing-breaks.store');
+    Route::delete('/admin/batches/{batch}/billing-breaks/{billingBreak}', [BatchFeeController::class, 'destroyBillingBreak'])->name('admin.batch-fees.billing-breaks.destroy');
+    Route::get('/admin/enrollments/{enrollment}/fee-adjustments', [EnrollmentFeeAdjustmentController::class, 'index'])->name('admin.enrollment-fee-adjustments.index');
+    Route::post('/admin/enrollments/{enrollment}/fee-adjustments', [EnrollmentFeeAdjustmentController::class, 'store'])->name('admin.enrollment-fee-adjustments.store');
+    Route::put('/admin/enrollments/{enrollment}/fee-adjustments/{feeAdjustment}', [EnrollmentFeeAdjustmentController::class, 'update'])->name('admin.enrollment-fee-adjustments.update');
 });
 
 Route::middleware(['auth', 'permission:collect payments'])->group(function () {

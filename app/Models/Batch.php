@@ -126,6 +126,28 @@ class Batch extends Model
     }
 
     /**
+     * Get paused billing months for this batch.
+     */
+    public function billingBreaks(): HasMany
+    {
+        return $this->hasMany(BatchBillingBreak::class);
+    }
+
+    /**
+     * Determine whether monthly billing is paused for the given month.
+     */
+    public function isBillingPausedForMonth(string $month): bool
+    {
+        $breaks = $this->relationLoaded('billingBreaks')
+            ? $this->billingBreaks
+            : $this->billingBreaks()->get();
+
+        return $breaks
+            ->where('status', 'active')
+            ->contains(fn (BatchBillingBreak $break) => $break->month === $month);
+    }
+
+    /**
      * Get attendance sessions opened for this batch.
      */
     public function attendanceSessions(): HasMany

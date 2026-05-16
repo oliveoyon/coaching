@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Enrollment extends Model
 {
@@ -67,6 +68,14 @@ class Enrollment extends Model
     }
 
     /**
+     * Get fee adjustments for this enrollment.
+     */
+    public function feeAdjustments(): HasMany
+    {
+        return $this->hasMany(EnrollmentFeeAdjustment::class);
+    }
+
+    /**
      * Get active fee items configured for the enrolled batch.
      */
     public function activeBatchFees(): HasMany
@@ -101,10 +110,10 @@ class Enrollment extends Model
     /**
      * Get remaining amount for a fee item.
      */
-    public function remainingForFee(BatchFee $batchFee, ?string $month = null): float
+    public function remainingForFee(BatchFee $batchFee, string $month, ?string $billingMonth = null): float
     {
-        $feeAmount = (float) $batchFee->amount;
-        $runningTotal = $this->approvedPaidForFee($batchFee, $month) + $this->pendingPaidForFee($batchFee, $month);
+        $feeAmount = $this->chargeAmountForFee($batchFee, $month);
+        $runningTotal = $this->approvedPaidForFee($batchFee, $billingMonth) + $this->pendingPaidForFee($batchFee, $billingMonth);
 
         return max(0, $feeAmount - $runningTotal);
     }
@@ -117,11 +126,19 @@ class Enrollment extends Model
         $periodStart = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
         $periodEnd = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
 
+        if (! $batchFee->isEffectiveForMonth($month)) {
+            return false;
+        }
+
         if ($this->start_date && $this->start_date->gt($periodEnd)) {
             return false;
         }
 
         if ($batchFee->feeType?->frequency === 'monthly') {
+            if ($this->batch?->isBillingPausedForMonth($month)) {
+                return false;
+            }
+
             return ! $this->end_date || $this->end_date->gte($periodStart);
         }
 
@@ -134,5 +151,49 @@ class Enrollment extends Model
     public function billingMonthForFee(BatchFee $batchFee, string $month): ?string
     {
         return $batchFee->feeType?->frequency === 'monthly' ? $month : null;
+    }
+
+    /**
+     * Get applicable adjustments for a fee in a selected month.
+     */
+    public function applicableFeeAdjustments(BatchFee $batchFee, string $month): Collection
+    {
+        $adjustments = $this->relationLoaded('feeAdjustments')
+            ? $this->feeAdjustments
+            : $this->feeAdjustments()->get();
+
+        return $adjustments
+            ->where('batch_fee_id', $batchFee->id)
+            ->filter(fn (EnrollmentFeeAdjustment $adjustment) => $adjustment->appliesToMonth($month))
+            ->values();
+    }
+
+    /**
+     * Get total discount/waiver amount for the selected fee and month.
+     */
+    public function discountAmountForFee(BatchFee $batchFee, string $month): float
+    {
+        $baseAmount = $batchFee->amountForMonth($month);
+
+        $discount = $this->applicableFeeAdjustments($batchFee, $month)
+            ->sum(function (EnrollmentFeeAdjustment $adjustment) use ($baseAmount) {
+                if ($adjustment->value_type === 'percent') {
+                    return ($baseAmount * (float) $adjustment->value) / 100;
+                }
+
+                return (float) $adjustment->value;
+            });
+
+        return min($baseAmount, (float) $discount);
+    }
+
+    /**
+     * Get net payable fee amount after discount/waiver.
+     */
+    public function chargeAmountForFee(BatchFee $batchFee, string $month): float
+    {
+        $baseAmount = $batchFee->amountForMonth($month);
+
+        return max(0, $baseAmount - $this->discountAmountForFee($batchFee, $month));
     }
 }

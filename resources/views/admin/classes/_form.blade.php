@@ -1,8 +1,8 @@
 @csrf
 
-<div class="border rounded-4 p-4">
-    <div class="fw-semibold mb-3">Class Info</div>
-    <div class="row g-4">
+<div class="border rounded-4 p-4 setup-form-section">
+    <div class="fw-semibold mb-3 setup-form-section-title">Class Info</div>
+    <div class="row g-3">
         <div class="col-md-8">
             <label for="name" class="form-label">Class Name</label>
             <input type="text" name="name" id="name" value="{{ old('name', $class->name ?? '') }}" class="form-control @error('name') is-invalid @enderror" required>

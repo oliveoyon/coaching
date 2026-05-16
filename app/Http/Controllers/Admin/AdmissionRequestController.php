@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\StudentFaceRegistration;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdmissionRequestController extends Controller
@@ -18,14 +19,42 @@ class AdmissionRequestController extends Controller
     /**
      * Display a listing of admission requests.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $requests = AdmissionRequest::query()
-            ->with(['batch.academicClass', 'batch.subject', 'student', 'reviewer'])
-            ->latest()
-            ->paginate(12);
+        $search = trim((string) $request->string('search'));
+        $status = (string) $request->string('status');
+        $batchId = $request->integer('batch_id');
+        $hasFilters = $search !== '' || in_array($status, ['pending', 'approved', 'rejected'], true) || $batchId > 0;
 
-        return view('admin.admission-requests.index', compact('requests'));
+        $baseQuery = AdmissionRequest::query()
+            ->with(['batch.academicClass', 'batch.subject', 'student', 'reviewer'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('guardian_phone', 'like', "%{$search}%")
+                        ->orWhereHas('batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->when(in_array($status, ['pending', 'approved', 'rejected'], true), fn ($query) => $query->where('status', $status))
+            ->when($batchId > 0, fn ($query) => $query->where('batch_id', $batchId));
+
+        $requests = $hasFilters
+            ? $baseQuery->latest()->paginate(12)->withQueryString()
+            : AdmissionRequest::query()->whereRaw('1 = 0')->paginate(12);
+
+        return view('admin.admission-requests.index', [
+            'requests' => $requests,
+            'search' => $search,
+            'status' => $status,
+            'batchId' => $batchId,
+            'hasFilters' => $hasFilters,
+            'batches' => \App\Models\Batch::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'totalRequests' => AdmissionRequest::query()->count(),
+            'pendingRequests' => AdmissionRequest::query()->where('status', 'pending')->count(),
+            'approvedRequests' => AdmissionRequest::query()->where('status', 'approved')->count(),
+        ]);
     }
 
     /**

@@ -1,8 +1,8 @@
 @csrf
 
-<div class="border rounded-4 p-4">
-    <div class="fw-semibold mb-3">Subject Info</div>
-    <div class="row g-4">
+<div class="border rounded-4 p-4 setup-form-section">
+    <div class="fw-semibold mb-3 setup-form-section-title">Subject Info</div>
+    <div class="row g-3">
         <div class="col-md-8">
             <label for="name" class="form-label">Subject Name</label>
             <input type="text" name="name" id="name" value="{{ old('name', $subject->name ?? '') }}" class="form-control @error('name') is-invalid @enderror" required>

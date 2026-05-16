@@ -6,9 +6,9 @@
 
 <div class="row g-4">
     <div class="col-12">
-        <div class="border rounded-4 p-4">
-            <div class="fw-semibold mb-3">Teacher Info</div>
-            <div class="row g-4">
+        <div class="border rounded-4 p-4 setup-form-section">
+            <div class="fw-semibold mb-3 setup-form-section-title">Teacher Info</div>
+            <div class="row g-3">
                 <div class="col-md-6">
                     <label for="name" class="form-label">Teacher Name</label>
                     <input type="text" name="name" id="name" value="{{ old('name', $teacher?->user?->name ?? '') }}" class="form-control @error('name') is-invalid @enderror" required>
@@ -48,9 +48,9 @@
     </div>
 
     <div class="col-12">
-        <div class="border rounded-4 p-4">
-            <div class="fw-semibold mb-3">Login Access</div>
-            <div class="row g-4">
+        <div class="border rounded-4 p-4 setup-form-section">
+            <div class="fw-semibold mb-3 setup-form-section-title">Login Access</div>
+            <div class="row g-3">
                 <div class="col-md-6">
                     <label for="password" class="form-label">{{ isset($teacher) ? 'New Password' : 'Password' }}</label>
                     <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" {{ isset($teacher) ? '' : 'required' }}>

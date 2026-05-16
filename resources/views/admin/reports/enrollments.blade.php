@@ -16,6 +16,7 @@
                     <label for="status" class="form-label">Status</label>
                     <select name="status" id="status" class="form-select">
                         <option value="active" @selected($status === 'active')>Active</option>
+                        <option value="completed" @selected($status === 'completed')>Completed</option>
                         <option value="withdrawn" @selected($status === 'withdrawn')>Withdrawn</option>
                     </select>
                 </div>
@@ -85,7 +86,7 @@
                                 <td>{{ $enrollment->batch?->teachers?->pluck('user.name')->filter()->implode(', ') ?: '-' }}</td>
                                 <td>{{ $enrollment->start_date?->format('d M Y') }}</td>
                                 <td>{{ $enrollment->end_date?->format('d M Y') ?: '-' }}</td>
-                                <td><span class="badge text-bg-{{ $enrollment->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($enrollment->status) }}</span></td>
+                                <td><span class="badge text-bg-{{ $enrollment->status === 'active' ? 'success' : ($enrollment->status === 'completed' ? 'info' : 'secondary') }}">{{ ucfirst($enrollment->status) }}</span></td>
                             </tr>
                         @empty
                             <tr>

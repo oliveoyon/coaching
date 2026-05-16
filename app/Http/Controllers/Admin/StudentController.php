@@ -7,11 +7,14 @@ use App\Http\Requests\Admin\StudentRequest;
 use App\Models\AcademicClass;
 use App\Models\AttendanceRecord;
 use App\Models\Student;
+use App\Models\StudentFaceRegistration;
 use Illuminate\Support\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class StudentController extends Controller
@@ -76,14 +79,30 @@ class StudentController extends Controller
     public function store(StudentRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $faceCapturePath = $this->storeFaceCapture($request);
 
-        if ($request->hasFile('photo')) {
-            $validated['photo_path'] = $request->file('photo')->store('students/photos', 'public');
+        if ($faceCapturePath) {
+            $validated['photo_path'] = $faceCapturePath;
         }
 
-        unset($validated['photo']);
+        unset($validated['photo'], $validated['face_capture']);
 
-        Student::create($validated);
+        DB::transaction(function () use ($validated, $faceCapturePath, $request): void {
+            $student = Student::create($validated);
+
+            if ($faceCapturePath) {
+                StudentFaceRegistration::create([
+                    'student_id' => $student->id,
+                    'capture_path' => $faceCapturePath,
+                    'capture_method' => $request->filled('face_capture') ? 'live_camera' : 'file_upload',
+                    'status' => 'verified',
+                    'captured_at' => now(),
+                    'verified_by' => $request->user()?->id,
+                    'verified_at' => now(),
+                    'note' => 'Captured during offline student admission from the office panel.',
+                ]);
+            }
+        });
 
         return redirect()
             ->route('admin.students.index')
@@ -110,7 +129,10 @@ class StudentController extends Controller
                 'batch.subject',
                 'batch.teachers.user',
                 'batch.batchFees.feeType',
+                'batch.batchFees.monthOverrides',
+                'batch.billingBreaks',
                 'payments.batchFee.feeType',
+                'feeAdjustments.batchFee.feeType',
             ])
             ->latest('start_date')
             ->get();
@@ -245,22 +267,64 @@ class StudentController extends Controller
     public function update(StudentRequest $request, Student $student): RedirectResponse
     {
         $validated = $request->validated();
+        $faceCapturePath = $this->storeFaceCapture($request);
 
-        if ($request->hasFile('photo')) {
-            if ($student->photo_path) {
-                Storage::disk('public')->delete($student->photo_path);
-            }
-
-            $validated['photo_path'] = $request->file('photo')->store('students/photos', 'public');
+        if ($faceCapturePath) {
+            $validated['photo_path'] = $faceCapturePath;
         }
 
-        unset($validated['photo']);
+        unset($validated['photo'], $validated['face_capture']);
 
-        $student->update($validated);
+        DB::transaction(function () use ($student, $validated, $faceCapturePath, $request): void {
+            $student->update($validated);
+
+            if ($faceCapturePath) {
+                StudentFaceRegistration::create([
+                    'student_id' => $student->id,
+                    'capture_path' => $faceCapturePath,
+                    'capture_method' => $request->filled('face_capture') ? 'live_camera' : 'file_upload',
+                    'status' => 'verified',
+                    'captured_at' => now(),
+                    'verified_by' => $request->user()?->id,
+                    'verified_at' => now(),
+                    'note' => 'Updated from offline student profile for face attendance.',
+                ]);
+            }
+        });
 
         return redirect()
             ->route('admin.students.index')
             ->with('success', 'Student updated successfully.');
+    }
+
+    /**
+     * Store either a live face capture or fallback upload from the student form.
+     */
+    protected function storeFaceCapture(StudentRequest $request): ?string
+    {
+        if ($request->filled('face_capture')) {
+            $base64 = (string) $request->string('face_capture');
+
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches) !== 1) {
+                abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid face capture payload.');
+            }
+
+            $extension = strtolower($matches[1]) === 'jpeg' ? 'jpg' : strtolower($matches[1]);
+            $binary = base64_decode(substr($base64, strpos($base64, ',') + 1), true);
+
+            abort_if($binary === false, Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid face capture image.');
+
+            $path = 'students/faces/'.Str::uuid().'.'.$extension;
+            Storage::disk('public')->put($path, $binary);
+
+            return $path;
+        }
+
+        if ($request->hasFile('photo')) {
+            return $request->file('photo')->store('students/faces', 'public');
+        }
+
+        return null;
     }
 
     /**
@@ -314,10 +378,12 @@ class StudentController extends Controller
                             'batch_name' => $enrollment->batch?->name,
                             'fee_name' => $batchFee->feeType?->name,
                             'frequency' => $batchFee->feeType?->frequency,
-                            'amount' => (float) $batchFee->amount,
+                            'amount' => $enrollment->chargeAmountForFee($batchFee, $month),
+                            'base_amount' => (float) $batchFee->amount,
+                            'discount' => $enrollment->discountAmountForFee($batchFee, $month),
                             'approved' => $enrollment->approvedPaidForFee($batchFee, $billingMonth),
                             'pending' => $enrollment->pendingPaidForFee($batchFee, $billingMonth),
-                            'remaining' => $enrollment->remainingForFee($batchFee, $billingMonth),
+                            'remaining' => $enrollment->remainingForFee($batchFee, $month, $billingMonth),
                         ];
                     })
                     ->filter() ?? collect();

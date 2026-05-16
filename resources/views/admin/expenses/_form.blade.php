@@ -1,5 +1,22 @@
-<div class="border rounded-4 p-4 mb-4">
-    <h2 class="h5 mb-3">Expense Details</h2>
+<style>
+    .expense-form .section-card {
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    }
+
+    .expense-form .section-head {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="expense-form">
+<div class="section-card p-4 p-lg-4 mb-4">
+    <div class="section-head">Expense Details</div>
 
     <div class="row g-4">
         <div class="col-md-4">
@@ -57,6 +74,7 @@
 <div class="d-flex justify-content-end gap-2 mt-4">
     <a href="{{ route('admin.expenses.index') }}" class="btn btn-outline-secondary">Cancel</a>
     <button type="submit" class="btn btn-primary">{{ isset($expense) ? 'Update Expense' : 'Save Expense' }}</button>
+</div>
 </div>
 
 @push('scripts')

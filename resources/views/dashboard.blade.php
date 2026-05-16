@@ -4,69 +4,62 @@
 @section('page-title', $dashboardRole . ' Dashboard')
 @section('page-subtitle', $dashboardSubtitle)
 
+@push('styles')
+    <style>
+        .dashboard-stat-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 1rem;
+            background: #fff;
+        }
+
+        .dashboard-stat-label {
+            font-size: .76rem;
+            color: #64748b;
+            margin-bottom: .32rem;
+        }
+
+        .dashboard-stat-value {
+            font-size: 1.28rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .dashboard-quick-link {
+            min-width: 124px;
+        }
+    </style>
+@endpush
+
 @section('content')
-    <div class="row g-4 mb-4">
-        <div class="col-md-6 col-xl-3">
-            <div class="card metric-card bg-primary-subtle">
-                <div class="card-body">
-                    <div class="text-muted small mb-2">Current User</div>
-                    <div class="h5 mb-0">{{ $user->name }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-xl-3">
-            <div class="card metric-card bg-success-subtle">
-                <div class="card-body">
-                    <div class="text-muted small mb-2">Dashboard Role</div>
-                    <div class="h5 mb-0">{{ $dashboardRole }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-xl-3">
-            <div class="card metric-card bg-warning-subtle">
-                <div class="card-body">
-                    <div class="text-muted small mb-2">Reports Access</div>
-                    <div class="h5 mb-0">{{ $user->can('view reports') ? 'Allowed' : 'Restricted' }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-xl-3">
-            <div class="card metric-card bg-info-subtle">
-                <div class="card-body">
-                    <div class="text-muted small mb-2">Primary Access Flow</div>
-                    <div class="h5 mb-0">
-                        @if ($user->hasRole('Teacher'))
-                            Own Work Scope
-                        @elseif ($user->hasRole('Accounts'))
-                            Finance Scope
-                        @else
-                            Full Operations
-                        @endif
+    <div class="row g-3 mb-3">
+        @foreach ($summaryCards as $card)
+            <div class="col-sm-6 col-xl-3">
+                <div class="card dashboard-stat-card h-100">
+                    <div class="card-body">
+                        <div class="dashboard-stat-label">{{ $card['label'] }}</div>
+                        <div class="dashboard-stat-value text-{{ $card['tone'] }}">{{ $card['value'] }}</div>
                     </div>
                 </div>
             </div>
-        </div>
+        @endforeach
     </div>
 
-    <div class="card page-card">
-        <div class="card-body p-4">
-            <h2 class="h5 mb-3">Quick Access</h2>
+    <div class="card page-card mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Quick Access</h2>
+                    <div class="text-muted small">Open the sections you use most.</div>
+                </div>
+                <div class="small text-muted">
+                    {{ $user->name }} | {{ $user->getRoleNames()->implode(', ') }}
+                </div>
+            </div>
+
             <div class="d-flex flex-wrap gap-2">
-                @can('manage users')
-                    <a href="{{ route('admin.users.index') }}" class="btn btn-primary">Manage Users</a>
-                @endcan
-
-                @can('manage batches')
-                    <a href="{{ route('admin.batches.index') }}" class="btn btn-outline-primary">Manage Batches</a>
-                @endcan
-
-                @if ($user->hasAnyRole(['Super Admin', 'Admin']))
-                    <a href="{{ route('admin.rbac-demo') }}" class="btn btn-outline-primary">View RBAC Demo</a>
-                @endif
-
-                @can('view reports')
-                    <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary">Open Reports</a>
-                @endcan
+                @foreach ($quickLinks as $link)
+                    <a href="{{ $link['route'] }}" class="btn btn-{{ $link['style'] }} dashboard-quick-link">{{ $link['label'] }}</a>
+                @endforeach
             </div>
         </div>
     </div>

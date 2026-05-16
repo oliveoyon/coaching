@@ -10,11 +10,13 @@ use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\Batch;
 use App\Services\AttendanceSessionService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
@@ -31,16 +33,42 @@ class AttendanceController extends Controller
         $status = (string) $request->string('status');
         $batchId = $request->integer('batch_id');
         $attendanceDate = (string) $request->string('attendance_date');
+        $today = CarbonImmutable::today();
+        $hasExplicitStatus = in_array($status, ['in_progress', 'completed'], true);
+        $isDefaultBoard = $attendanceDate === '' && ! $hasExplicitStatus;
 
-        $sessions = $this->accessibleSessionsQuery($request)
+        $baseQuery = $this->accessibleSessionsQuery($request)
             ->with(['batch.academicClass', 'batch.subject', 'batch.teachers.user', 'creator'])
             ->withCount('records')
-            ->when(in_array($status, ['in_progress', 'completed'], true), fn ($query) => $query->where('status', $status))
-            ->when($batchId > 0, fn ($query) => $query->where('batch_id', $batchId))
-            ->when($attendanceDate !== '', fn ($query) => $query->whereDate('attendance_date', $attendanceDate))
-            ->latest('attendance_date')
-            ->paginate(12)
-            ->withQueryString();
+            ->when($batchId > 0, fn ($query) => $query->where('batch_id', $batchId));
+
+        if ($isDefaultBoard) {
+            $sessions = $this->paginateSortedSessions(
+                (clone $baseQuery)
+                    ->whereDate('attendance_date', $today->toDateString())
+                    ->where('status', 'in_progress')
+                    ->get()
+                    ->sort(function (AttendanceSession $left, AttendanceSession $right) use ($today) {
+                        $leftTime = $this->batchScheduleSortTime($left->batch, $today);
+                        $rightTime = $this->batchScheduleSortTime($right->batch, $today);
+
+                        if ($leftTime !== $rightTime) {
+                            return strcmp($leftTime, $rightTime);
+                        }
+
+                        return strcmp((string) $left->batch?->name, (string) $right->batch?->name);
+                    })
+                    ->values(),
+                $request
+            );
+        } else {
+            $sessions = (clone $baseQuery)
+                ->when($hasExplicitStatus, fn ($query) => $query->where('status', $status))
+                ->when($attendanceDate !== '', fn ($query) => $query->whereDate('attendance_date', $attendanceDate))
+                ->latest('attendance_date')
+                ->paginate(12)
+                ->withQueryString();
+        }
 
         return view('admin.attendance.index', [
             'sessions' => $sessions,
@@ -48,6 +76,8 @@ class AttendanceController extends Controller
             'batchId' => $batchId,
             'attendanceDate' => $attendanceDate,
             'batches' => $this->formBatches($request),
+            'isDefaultBoard' => $isDefaultBoard,
+            'todayDate' => $today,
         ]);
     }
 
@@ -92,6 +122,10 @@ class AttendanceController extends Controller
         $selectedMode = in_array((string) $request->string('mode'), ['manual', 'qr', 'face'], true)
             ? (string) $request->string('mode')
             : (in_array($attendance->mode, ['manual', 'qr', 'face'], true) ? $attendance->mode : 'manual');
+
+        if ($attendance->status !== 'completed') {
+            $attendance = $this->attendanceSessions->syncRoster($attendance);
+        }
 
         $search = trim((string) $request->string('search'));
         $status = (string) $request->string('status');
@@ -377,5 +411,52 @@ class AttendanceController extends Controller
             'excused' => (int) ($summary['excused'] ?? 0),
             'absent' => (int) ($summary['absent'] ?? 0),
         ];
+    }
+
+    /**
+     * Sort attendance cards by scheduled batch time for the selected day.
+     */
+    protected function batchScheduleSortTime(?Batch $batch, CarbonImmutable $date): string
+    {
+        if (! $batch) {
+            return '99:99';
+        }
+
+        $dayKey = strtolower($date->format('D'));
+
+        $matchingSlot = collect($batch->schedule_entries)
+            ->filter(fn (array $entry) => strtolower((string) ($entry['day'] ?? '')) === $dayKey)
+            ->sortBy('start_time')
+            ->first();
+
+        if ($matchingSlot) {
+            return (string) $matchingSlot['start_time'];
+        }
+
+        return (string) collect($batch->schedule_entries)
+            ->pluck('start_time')
+            ->filter()
+            ->sort()
+            ->first() ?: '99:99';
+    }
+
+    /**
+     * Paginate an already-sorted in-memory collection.
+     */
+    protected function paginateSortedSessions(Collection $sessions, Request $request, int $perPage = 12): LengthAwarePaginator
+    {
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $items = $sessions->forPage($page, $perPage)->values();
+
+        return (new LengthAwarePaginator(
+            $items,
+            $sessions->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        ))->withQueryString();
     }
 }

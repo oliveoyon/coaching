@@ -9,7 +9,12 @@
         <div class="col-lg-7">
             <div class="card page-card h-100">
                 <div class="card-body p-4">
-                    <h2 class="h5 mb-4">Enrollment</h2>
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                        <h2 class="h5 mb-0">Enrollment</h2>
+                        @can('manage fee setup')
+                            <a href="{{ route('admin.enrollment-fee-adjustments.index', $enrollment) }}" class="btn btn-sm btn-outline-primary">Fee Adjustments</a>
+                        @endcan
+                    </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -32,7 +37,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="text-muted small">Status</div>
-                            <span class="badge rounded-pill {{ $enrollment->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">
+                            <span class="badge rounded-pill {{ $enrollment->status === 'active' ? 'text-bg-success' : ($enrollment->status === 'completed' ? 'text-bg-info' : 'text-bg-secondary') }}">
                                 {{ ucfirst($enrollment->status) }}
                             </span>
                         </div>

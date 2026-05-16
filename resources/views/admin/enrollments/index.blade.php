@@ -2,36 +2,9 @@
 
 @section('title', 'Enrollments')
 @section('page-title', auth()->user()->can('manage enrollments') ? 'Enrollment Management' : 'My Student Enrollments')
-@section('page-subtitle', 'View active and withdrawn enrollments.')
+@section('page-subtitle', 'View enrollments')
 
 @section('content')
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card page-card h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-2">Results</div>
-                    <div class="h4 mb-0">{{ $enrollments->total() }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card page-card h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-2">Active on This Page</div>
-                    <div class="h4 mb-0">{{ $enrollments->getCollection()->where('status', 'active')->count() }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card page-card h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-2">Withdrawn on This Page</div>
-                    <div class="h4 mb-0">{{ $enrollments->getCollection()->where('status', 'withdrawn')->count() }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="card page-card">
         <div class="card-body p-4">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
@@ -43,6 +16,7 @@
                         <select name="status" class="form-select">
                             <option value="">All Status</option>
                             <option value="active" @selected($status === 'active')>Active</option>
+                            <option value="completed" @selected($status === 'completed')>Completed</option>
                             <option value="withdrawn" @selected($status === 'withdrawn')>Withdrawn</option>
                         </select>
                     </div>
@@ -55,9 +29,14 @@
                 </form>
 
                 @can('manage enrollments')
-                    <a href="{{ route('admin.enrollments.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-1"></i> New Enrollment
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('admin.enrollments.promote') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-right-circle me-1"></i> Promotion
+                        </a>
+                        <a href="{{ route('admin.enrollments.create') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i> New Enrollment
+                        </a>
+                    </div>
                 @endcan
             </div>
 
@@ -93,7 +72,7 @@
                                 <td>{{ $enrollment->start_date?->format('d M Y') }}</td>
                                 <td>{{ $enrollment->end_date?->format('d M Y') ?: '-' }}</td>
                                 <td>
-                                    <span class="badge rounded-pill {{ $enrollment->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                    <span class="badge rounded-pill {{ $enrollment->status === 'active' ? 'text-bg-success' : ($enrollment->status === 'completed' ? 'text-bg-info' : 'text-bg-secondary') }}">
                                         {{ ucfirst($enrollment->status) }}
                                     </span>
                                 </td>

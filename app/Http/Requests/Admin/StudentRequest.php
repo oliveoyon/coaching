@@ -30,6 +30,7 @@ class StudentRequest extends FormRequest
             'school' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'face_capture' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
     }

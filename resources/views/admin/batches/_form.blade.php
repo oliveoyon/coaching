@@ -21,9 +21,9 @@
 
 <div class="row g-4">
     <div class="col-12">
-        <div class="border rounded-4 p-4">
-            <div class="fw-semibold mb-3">Basic Info</div>
-            <div class="row g-4">
+        <div class="border rounded-4 p-4 batch-form-section">
+            <div class="fw-semibold mb-3 batch-form-section-title">Basic Info</div>
+            <div class="row g-3">
                 <div class="col-md-6">
                     <label for="name" class="form-label">Batch Name</label>
                     <input type="text" name="name" id="name" value="{{ old('name', $batch->name ?? '') }}" class="form-control @error('name') is-invalid @enderror" required>
@@ -92,10 +92,10 @@
     </div>
 
     <div class="col-12">
-        <div class="border rounded-4 p-4">
-            <div class="fw-semibold mb-3">Schedule</div>
+        <div class="border rounded-4 p-4 batch-form-section">
+            <div class="fw-semibold mb-3 batch-form-section-title">Schedule</div>
             <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-                <div class="small text-muted">Add one or more class times</div>
+                <div class="small text-muted">Add class times</div>
                 <button type="button" class="btn btn-sm btn-outline-primary" id="add-schedule-slot">
                     <i class="bi bi-plus-circle me-1"></i> Add Time
                 </button>
@@ -188,8 +188,8 @@
     </template>
 
     <div class="col-12">
-        <div class="border rounded-4 p-4">
-            <div class="fw-semibold mb-3">Teachers</div>
+        <div class="border rounded-4 p-4 batch-form-section">
+            <div class="fw-semibold mb-3 batch-form-section-title">Teachers</div>
             @if ($teachers->isEmpty())
                 <div class="text-muted">No active teacher found.</div>
             @else
@@ -204,7 +204,7 @@
                                 id="teacher_{{ $teacher->id }}"
                                 @checked($selectedTeacherIds->contains((string) $teacher->id))
                             >
-                            <label class="btn btn-outline-primary text-start w-100 h-100 rounded-4 p-3" for="teacher_{{ $teacher->id }}">
+                            <label class="text-start w-100 h-100 teacher-select-card" for="teacher_{{ $teacher->id }}">
                                 <div class="fw-semibold">{{ $teacher->user->name }}</div>
                                 <div class="small text-muted">{{ $teacher->user->email }}</div>
                             </label>
@@ -222,7 +222,7 @@
     </div>
 </div>
 
-<div class="d-flex justify-content-end gap-2 mt-4">
+<div class="batch-form-actions d-flex justify-content-end gap-2 mt-4">
     <a href="{{ route('admin.batches.index') }}" class="btn btn-outline-secondary">Cancel</a>
     <button type="submit" class="btn btn-primary">{{ $submitLabel }}</button>
 </div>

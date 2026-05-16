@@ -11,6 +11,7 @@ use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Services\IncomeDistributionService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -27,6 +28,7 @@ class PaymentController extends Controller
         $month = (string) $request->string('month');
         $status = (string) $request->string('status');
         $method = (string) $request->string('method');
+        $historyHasFilters = $search !== '' || $month !== '' || in_array($status, ['pending', 'approved', 'rejected'], true) || in_array($method, ['cash', 'bkash', 'nagad'], true);
         $activeTab = (string) $request->string('tab');
         $activeTab = in_array($activeTab, ['collect', 'pending', 'due', 'history'], true) ? $activeTab : 'collect';
         if ($activeTab === 'pending' && ! $request->user()->can('approve payments')) {
@@ -37,37 +39,39 @@ class PaymentController extends Controller
         $monthStart = $dashboardMonth.'-01';
         $monthEnd = date('Y-m-t', strtotime($monthStart));
 
-        $payments = Payment::query()
-            ->with([
-                'enrollment.student.academicClass',
-                'enrollment.batch.academicClass',
-                'enrollment.batch.subject',
-                'batchFee.feeType',
-                'collector',
-                'approver',
-            ])
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($subQuery) use ($search) {
-                    $subQuery
-                        ->where('transaction_id', 'like', "%{$search}%")
-                        ->orWhereHas('enrollment.student', function ($studentQuery) use ($search) {
-                            $studentQuery
-                                ->where('student_code', 'like', "%{$search}%")
-                                ->orWhere('name', 'like', "%{$search}%")
-                                ->orWhere('phone', 'like', "%{$search}%")
-                                ->orWhere('guardian_phone', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('enrollment.batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
-                });
-            })
-            ->when($month !== '', fn ($query) => $query->where('month', $month))
-            ->when(in_array($status, ['pending', 'approved', 'rejected'], true), fn ($query) => $query->where('status', $status))
-            ->when(in_array($method, ['cash', 'bkash', 'nagad'], true), fn ($query) => $query->where('method', $method))
-            ->when($request->user()->hasRole('Teacher'), fn ($query) => $this->scopePaymentsToTeacher($query, $request))
-            ->latest('payment_date')
-            ->latest('id')
-            ->paginate(15)
-            ->withQueryString();
+        $payments = $historyHasFilters
+            ? Payment::query()
+                ->with([
+                    'enrollment.student.academicClass',
+                    'enrollment.batch.academicClass',
+                    'enrollment.batch.subject',
+                    'batchFee.feeType',
+                    'collector',
+                    'approver',
+                ])
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($subQuery) use ($search) {
+                        $subQuery
+                            ->where('transaction_id', 'like', "%{$search}%")
+                            ->orWhereHas('enrollment.student', function ($studentQuery) use ($search) {
+                                $studentQuery
+                                    ->where('student_code', 'like', "%{$search}%")
+                                    ->orWhere('name', 'like', "%{$search}%")
+                                    ->orWhere('phone', 'like', "%{$search}%")
+                                    ->orWhere('guardian_phone', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('enrollment.batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
+                    });
+                })
+                ->when($month !== '', fn ($query) => $query->where('month', $month))
+                ->when(in_array($status, ['pending', 'approved', 'rejected'], true), fn ($query) => $query->where('status', $status))
+                ->when(in_array($method, ['cash', 'bkash', 'nagad'], true), fn ($query) => $query->where('method', $method))
+                ->when($request->user()->hasRole('Teacher'), fn ($query) => $this->scopePaymentsToTeacher($query, $request))
+                ->latest('payment_date')
+                ->latest('id')
+                ->paginate(15)
+                ->withQueryString()
+            : Payment::query()->whereRaw('1 = 0')->paginate(15);
 
         $summaryCards = [
             'today_collected' => (float) $this->paymentsScopeForUser($request)
@@ -100,6 +104,8 @@ class PaymentController extends Controller
                 'batch.academicClass',
                 'batch.subject',
                 'batch.batchFees.feeType',
+                'batch.batchFees.monthOverrides',
+                'batch.billingBreaks',
                 'payments.batchFee.feeType',
             ])
             ->whereDate('start_date', '<=', $monthEnd)
@@ -154,6 +160,7 @@ class PaymentController extends Controller
             'month',
             'status',
             'method',
+            'historyHasFilters',
             'activeTab',
             'dashboardMonth',
             'summaryCards',
@@ -227,7 +234,10 @@ class PaymentController extends Controller
                                 'batch.academicClass',
                                 'batch.subject',
                                 'batch.batchFees.feeType',
+                                'batch.batchFees.monthOverrides',
+                                'batch.billingBreaks',
                                 'payments.batchFee.feeType',
+                                'feeAdjustments.batchFee.feeType',
                             ]);
 
                         if ($selectedBatchId) {
@@ -269,7 +279,6 @@ class PaymentController extends Controller
     {
         $method = $request->string('method')->toString();
         $isCash = $method === 'cash';
-        $month = $request->string('month')->toString() ?: null;
         $items = collect($request->validated('items'))
             ->filter(fn ($item) => (float) ($item['amount'] ?? 0) > 0);
 
@@ -286,7 +295,7 @@ class PaymentController extends Controller
                 'enrollment_id' => $item['enrollment_id'],
                 'batch_fee_id' => $item['batch_fee_id'],
                 'amount' => $item['amount'],
-                'month' => $batchFee?->feeType?->frequency === 'monthly' ? $month : null,
+                'month' => $batchFee?->feeType?->frequency === 'monthly' ? ($item['month'] ?? null) : null,
                 'payment_date' => $request->date('payment_date')->format('Y-m-d'),
                 'method' => $method,
                 'transaction_id' => $request->string('transaction_id')->toString() ?: null,
@@ -346,42 +355,61 @@ class PaymentController extends Controller
      */
     public function dueList(Request $request): View
     {
-        $month = (string) $request->string('month') ?: now()->format('Y-m');
+        $month = trim((string) $request->string('month'));
+        $resolvedMonth = $month !== '' ? $month : now()->format('Y-m');
         $search = trim((string) $request->string('search'));
-        $periodStart = $month.'-01';
-        $periodEnd = date('Y-m-t', strtotime($periodStart));
+        $batchId = $request->integer('batch_id');
+        $hasFilters = $month !== '' || $search !== '' || $batchId > 0;
+        $periodStart = $hasFilters ? $resolvedMonth.'-01' : null;
+        $periodEnd = $periodStart ? date('Y-m-t', strtotime($periodStart)) : null;
 
-        $dueEnrollments = $this->eligibleEnrollmentsQuery($request)
-            ->with([
-                'student.academicClass',
-                'batch.academicClass',
-                'batch.subject',
-                'batch.batchFees.feeType',
-                'payments.batchFee.feeType',
-            ])
-            ->whereDate('start_date', '<=', $periodEnd)
-            ->where(function ($query) use ($periodStart) {
-                $query->whereNull('end_date')
-                    ->orWhereDate('end_date', '>=', $periodStart);
-            })
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($subQuery) use ($search) {
-                    $subQuery
-                        ->whereHas('student', function ($studentQuery) use ($search) {
-                            $studentQuery
-                                ->where('student_code', 'like', "%{$search}%")
-                                ->orWhere('name', 'like', "%{$search}%")
-                                ->orWhere('phone', 'like', "%{$search}%")
-                                ->orWhere('guardian_phone', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
-                });
-            })
-            ->orderBy(Student::select('name')->whereColumn('students.id', 'enrollments.student_id'))
-            ->paginate(15)
-            ->withQueryString();
+        $dueEnrollments = $hasFilters
+            ? $this->eligibleEnrollmentsQuery($request)
+                ->with([
+                    'student.academicClass',
+                    'batch.academicClass',
+                    'batch.subject',
+                    'batch.batchFees.feeType',
+                    'batch.batchFees.monthOverrides',
+                    'batch.billingBreaks',
+                    'payments.batchFee.feeType',
+                    'feeAdjustments.batchFee.feeType',
+                ])
+                ->when($periodEnd, fn ($query) => $query->whereDate('start_date', '<=', $periodEnd))
+                ->when($periodStart, function ($query) use ($periodStart) {
+                    $query->where(function ($subQuery) use ($periodStart) {
+                        $subQuery->whereNull('end_date')
+                            ->orWhereDate('end_date', '>=', $periodStart);
+                    });
+                })
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($subQuery) use ($search) {
+                        $subQuery
+                            ->whereHas('student', function ($studentQuery) use ($search) {
+                                $studentQuery
+                                    ->where('student_code', 'like', "%{$search}%")
+                                    ->orWhere('name', 'like', "%{$search}%")
+                                    ->orWhere('phone', 'like', "%{$search}%")
+                                    ->orWhere('guardian_phone', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
+                    });
+                })
+                ->when($batchId > 0, fn ($query) => $query->where('batch_id', $batchId))
+                ->orderBy(Student::select('name')->whereColumn('students.id', 'enrollments.student_id'))
+                ->paginate(15)
+                ->withQueryString()
+            : Enrollment::query()->whereRaw('1 = 0')->paginate(15);
 
-        return view('admin.payments.due-list', compact('dueEnrollments', 'month', 'search'));
+        return view('admin.payments.due-list', [
+            'dueEnrollments' => $dueEnrollments,
+            'month' => $month,
+            'resolvedMonth' => $resolvedMonth,
+            'search' => $search,
+            'batchId' => $batchId,
+            'hasFilters' => $hasFilters,
+            'batches' => Batch::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     /**
@@ -391,7 +419,9 @@ class PaymentController extends Controller
     {
         if (! $enrollment->isFeeBillableForMonth($batchFee, $month)) {
             return [
-                'fee' => (float) $batchFee->amount,
+                'fee' => 0,
+                'base_fee' => $batchFee->amountForMonth($month),
+                'discount' => 0,
                 'approved' => 0,
                 'pending' => 0,
                 'remaining' => 0,
@@ -401,10 +431,14 @@ class PaymentController extends Controller
         $billingMonth = $enrollment->billingMonthForFee($batchFee, $month);
         $approved = $enrollment->approvedPaidForFee($batchFee, $billingMonth);
         $pending = $enrollment->pendingPaidForFee($batchFee, $billingMonth);
-        $fee = (float) $batchFee->amount;
+        $baseFee = $batchFee->amountForMonth($month);
+        $discount = $enrollment->discountAmountForFee($batchFee, $month);
+        $fee = $enrollment->chargeAmountForFee($batchFee, $month);
 
         return [
             'fee' => $fee,
+            'base_fee' => $baseFee,
+            'discount' => $discount,
             'approved' => $approved,
             'pending' => $pending,
             'remaining' => max(0, $fee - ($approved + $pending)),
@@ -433,17 +467,26 @@ class PaymentController extends Controller
             ->map(function (Enrollment $enrollment) use ($month) {
                 $feeRows = $enrollment->batch?->batchFees
                     ?->where('status', 'active')
-                    ->map(function (BatchFee $batchFee) use ($enrollment, $month) {
-                        $isMonthly = $batchFee->feeType?->frequency === 'monthly';
+                    ->flatMap(function (BatchFee $batchFee) use ($enrollment, $month) {
+                        if ($batchFee->feeType?->frequency === 'monthly') {
+                            return $this->buildMonthlyFeeRows($enrollment, $batchFee, $month);
+                        }
+
                         $summary = $this->feeSummary($enrollment, $batchFee, $month);
 
-                        return [
-                            'batch_fee' => $batchFee,
-                            'is_monthly' => $isMonthly,
-                            'summary' => $summary,
-                        ];
+                        if ($summary['remaining'] <= 0) {
+                            return collect();
+                        }
+
+                        return collect([
+                            [
+                                'batch_fee' => $batchFee,
+                                'is_monthly' => false,
+                                'billing_month' => null,
+                                'summary' => $summary,
+                            ],
+                        ]);
                     })
-                    ->filter(fn ($row) => $row['summary']['remaining'] > 0 || $row['summary']['approved'] > 0 || $row['summary']['pending'] > 0)
                     ->values() ?? collect();
 
                 return [
@@ -453,6 +496,63 @@ class PaymentController extends Controller
             })
             ->filter(fn ($row) => $row['fees']->isNotEmpty())
             ->values();
+    }
+
+    /**
+     * Build overdue monthly fee rows up to the selected month.
+     */
+    protected function buildMonthlyFeeRows(Enrollment $enrollment, BatchFee $batchFee, string $selectedMonth)
+    {
+        $selected = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
+        $start = $enrollment->start_date?->copy()->startOfMonth() ?? $selected->copy();
+
+        if ($batchFee->effective_from_month) {
+            $effectiveFrom = Carbon::createFromFormat('Y-m', $batchFee->effective_from_month)->startOfMonth();
+            if ($effectiveFrom->gt($start)) {
+                $start = $effectiveFrom;
+            }
+        }
+
+        $end = $selected->copy();
+
+        if ($enrollment->end_date) {
+            $enrollmentEnd = $enrollment->end_date->copy()->startOfMonth();
+            if ($enrollmentEnd->lt($end)) {
+                $end = $enrollmentEnd;
+            }
+        }
+
+        if ($batchFee->effective_to_month) {
+            $effectiveTo = Carbon::createFromFormat('Y-m', $batchFee->effective_to_month)->startOfMonth();
+            if ($effectiveTo->lt($end)) {
+                $end = $effectiveTo;
+            }
+        }
+
+        if ($start->gt($end)) {
+            return collect();
+        }
+
+        $months = collect();
+        $cursor = $start->copy();
+
+        while ($cursor->lte($end)) {
+            $billingMonth = $cursor->format('Y-m');
+            $summary = $this->feeSummary($enrollment, $batchFee, $billingMonth);
+
+            if ($summary['remaining'] > 0) {
+                $months->push([
+                    'batch_fee' => $batchFee,
+                    'is_monthly' => true,
+                    'billing_month' => $billingMonth,
+                    'summary' => $summary,
+                ]);
+            }
+
+            $cursor->addMonth();
+        }
+
+        return $months;
     }
 
     /**

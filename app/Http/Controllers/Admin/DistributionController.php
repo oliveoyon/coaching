@@ -21,7 +21,10 @@ class DistributionController extends Controller
         );
 
         $search = trim((string) $request->string('search'));
-        $month = (string) $request->string('month');
+        $month = trim((string) $request->string('month'));
+        $defaultMonth = now()->format('Y-m');
+        $displayMonth = $month !== '' ? $month : $defaultMonth;
+        $hasFilters = $search !== '' || $month !== '';
 
         $query = Distribution::query()
             ->with([
@@ -42,25 +45,27 @@ class DistributionController extends Controller
             $query->where('teacher_id', $teacher->id);
         }
 
-        $distributions = $query
-            ->when($search !== '', function ($builder) use ($search) {
-                $builder->where(function ($subQuery) use ($search) {
-                    $subQuery
-                        ->whereHas('teacher.user', fn ($teacherQuery) => $teacherQuery->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('payment.enrollment.student', function ($studentQuery) use ($search) {
-                            $studentQuery
-                                ->where('student_code', 'like', "%{$search}%")
-                                ->orWhere('name', 'like', "%{$search}%")
-                                ->orWhere('phone', 'like', "%{$search}%")
-                                ->orWhere('guardian_phone', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('payment.enrollment.batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
-                });
-            })
-            ->when($month !== '', fn ($builder) => $builder->whereHas('payment', fn ($paymentQuery) => $paymentQuery->where('month', $month)))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+        $distributions = $hasFilters
+            ? $query
+                ->when($search !== '', function ($builder) use ($search) {
+                    $builder->where(function ($subQuery) use ($search) {
+                        $subQuery
+                            ->whereHas('teacher.user', fn ($teacherQuery) => $teacherQuery->where('name', 'like', "%{$search}%"))
+                            ->orWhereHas('payment.enrollment.student', function ($studentQuery) use ($search) {
+                                $studentQuery
+                                    ->where('student_code', 'like', "%{$search}%")
+                                    ->orWhere('name', 'like', "%{$search}%")
+                                    ->orWhere('phone', 'like', "%{$search}%")
+                                    ->orWhere('guardian_phone', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('payment.enrollment.batch', fn ($batchQuery) => $batchQuery->where('name', 'like', "%{$search}%"));
+                    });
+                })
+                ->when($displayMonth !== '', fn ($builder) => $builder->whereHas('payment', fn ($paymentQuery) => $paymentQuery->where('month', $displayMonth)))
+                ->latest()
+                ->paginate(15)
+                ->withQueryString()
+            : Distribution::query()->whereRaw('1 = 0')->paginate(15);
 
         $summaryQuery = clone $query;
 
@@ -100,6 +105,6 @@ class DistributionController extends Controller
             ? 'teacher.earnings.index'
             : 'admin.distributions.index';
 
-        return view('admin.distributions.index', compact('distributions', 'search', 'month', 'pageTitle', 'routeName', 'summary', 'currentMonth'));
+        return view('admin.distributions.index', compact('distributions', 'search', 'month', 'displayMonth', 'hasFilters', 'pageTitle', 'routeName', 'summary', 'currentMonth'));
     }
 }

@@ -122,14 +122,17 @@ class ReportController extends Controller
                 'batch.academicClass',
                 'batch.subject',
                 'batch.batchFees.feeType',
+                'batch.batchFees.monthOverrides',
+                'batch.billingBreaks',
                 'payments.batchFee.feeType',
+                'feeAdjustments.batchFee.feeType',
             ])
             ->get()
             ->flatMap(function (Enrollment $enrollment) use ($filters): Collection {
                 return $enrollment->batch?->batchFees?->where('status', 'active')
                     ->map(function ($batchFee) use ($enrollment, $filters) {
                         $billingMonth = $batchFee->feeType?->frequency === 'monthly' ? $filters['month'] : null;
-                        $remaining = $enrollment->remainingForFee($batchFee, $billingMonth);
+                        $remaining = $enrollment->remainingForFee($batchFee, $filters['month'], $billingMonth);
 
                         if ($remaining <= 0) {
                             return null;
@@ -227,7 +230,7 @@ class ReportController extends Controller
         $teacherFilterId = $this->selectedTeacherId($request, $filters['teacherScopeId']);
 
         $enrollments = $this->enrollmentBaseQuery($filters['accessibleBatchIds'], $filters['classId'], $filters['batchId'], $teacherFilterId)
-            ->when(in_array($status, ['active', 'withdrawn'], true), fn (Builder $query) => $query->where('enrollments.status', $status))
+            ->when(in_array($status, ['active', 'withdrawn', 'completed'], true), fn (Builder $query) => $query->where('enrollments.status', $status))
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->whereHas('student', function (Builder $studentQuery) use ($search): void {
                     $studentQuery->where(function (Builder $subQuery) use ($search): void {

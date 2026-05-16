@@ -7,29 +7,26 @@
 @section('content')
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Total Students</div>
-                    <div class="fs-3 fw-semibold">{{ $studentStats['total'] }}</div>
-                    <div class="small text-muted">All records</div>
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+                <div class="card-body p-3">
+                    <div class="text-primary-emphasis small fw-semibold mb-1">Total Students</div>
+                    <div class="fs-4 fw-bold text-primary">{{ $studentStats['total'] }}</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Active</div>
-                    <div class="fs-3 fw-semibold text-success">{{ $studentStats['active'] }}</div>
-                    <div class="small text-muted">Currently active</div>
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">
+                <div class="card-body p-3">
+                    <div class="text-success-emphasis small fw-semibold mb-1">Active</div>
+                    <div class="fs-4 fw-bold text-success">{{ $studentStats['active'] }}</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card page-card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Inactive</div>
-                    <div class="fs-3 fw-semibold text-secondary">{{ $studentStats['inactive'] }}</div>
-                    <div class="small text-muted">Not active now</div>
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 1rem; background: linear-gradient(135deg, #f5f3ff 0%, #e9d5ff 100%);">
+                <div class="card-body p-3">
+                    <div class="text-secondary small fw-semibold mb-1">Inactive</div>
+                    <div class="fs-4 fw-bold text-secondary">{{ $studentStats['inactive'] }}</div>
                 </div>
             </div>
         </div>
@@ -40,7 +37,7 @@
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
                 <div>
                     <h2 class="h5 mb-1">Student Filters</h2>
-                    <div class="small text-muted">Search first, then open profile or edit.</div>
+                    <div class="small text-muted">Search and open.</div>
                 </div>
 
                 <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
@@ -51,7 +48,7 @@
             <form method="GET" action="{{ route('admin.students.index') }}" class="row g-3">
                 <div class="col-lg-5">
                     <label for="search" class="form-label">Search</label>
-                    <input type="text" name="search" id="search" value="{{ $search }}" class="form-control" placeholder="Code, name, phone, guardian phone">
+                    <input type="text" name="search" id="search" value="{{ $search }}" class="form-control" placeholder="Student code, name, phone, or guardian phone">
                 </div>
                 <div class="col-lg-3">
                     <label for="class_id" class="form-label">Class</label>
@@ -87,7 +84,7 @@
             @if (! $hasFilters)
                 <div class="py-5 text-center">
                     <div class="fw-semibold mb-2">Start with a filter</div>
-                    <div class="text-muted">Search by student code, name, phone, guardian phone, class, or status.</div>
+                    <div class="text-muted">Search by student, class, or status.</div>
                 </div>
             @elseif ($students && $students->count() > 0)
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -146,7 +143,7 @@
                     </div>
                 @endif
             @else
-                <div class="py-5 text-center text-muted">No students found for this filter.</div>
+                <div class="py-5 text-center text-muted">No students found.</div>
             @endif
         </div>
     </div>

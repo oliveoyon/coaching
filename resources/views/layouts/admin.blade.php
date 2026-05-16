@@ -23,6 +23,8 @@
             font-family: "Instrument Sans", sans-serif;
             background: var(--cms-body-bg);
             color: #1f2937;
+            font-size: .94rem;
+            line-height: 1.45;
         }
 
         .admin-shell {
@@ -47,12 +49,12 @@
         .admin-sidebar .nav-link {
             color: rgba(255, 255, 255, .78);
             border-radius: .75rem;
-            padding: .72rem .9rem;
+            padding: .62rem .82rem;
             display: flex;
             align-items: center;
             gap: .75rem;
-            margin-bottom: .35rem;
-            font-size: .92rem;
+            margin-bottom: .28rem;
+            font-size: .88rem;
             line-height: 1.2;
             white-space: nowrap;
         }
@@ -64,7 +66,7 @@
         }
 
         .admin-sidebar .menu-section + .menu-section {
-            margin-top: 1rem;
+            margin-top: .8rem;
         }
 
         .admin-sidebar .menu-toggle {
@@ -86,8 +88,8 @@
         }
 
         .admin-sidebar .submenu .nav-link {
-            padding: .58rem .82rem;
-            font-size: .88rem;
+            padding: .5rem .72rem;
+            font-size: .84rem;
         }
 
         .admin-sidebar .submenu .nav-link span {
@@ -124,13 +126,13 @@
         }
 
         .topbar-student-search {
-            min-width: 280px;
-            max-width: 420px;
+            min-width: 260px;
+            max-width: 380px;
         }
 
         .page-card {
             border: 1px solid var(--cms-card-border);
-            border-radius: 1rem;
+            border-radius: .9rem;
             box-shadow: 0 10px 30px rgba(15, 23, 42, .04);
         }
 
@@ -142,15 +144,56 @@
 
         .table > :not(caption) > * > * {
             vertical-align: middle;
+            padding: .68rem .75rem;
+            font-size: .9rem;
         }
 
         .content-wrapper {
-            padding: 1.5rem;
+            padding: 1.2rem;
+        }
+
+        .admin-page h1.h4 {
+            font-size: 1.2rem;
+        }
+
+        .admin-page .text-muted.small,
+        .admin-page .small {
+            font-size: .8rem !important;
+        }
+
+        .admin-page .form-control,
+        .admin-page .form-select,
+        .admin-page .input-group-text {
+            font-size: .9rem;
+            padding: .52rem .78rem;
+            min-height: calc(1.5em + 1.04rem + 2px);
+        }
+
+        .admin-page textarea.form-control {
+            min-height: auto;
+        }
+
+        .admin-page .btn {
+            font-size: .9rem;
+            padding: .5rem .82rem;
+        }
+
+        .admin-page .btn-sm {
+            font-size: .8rem;
+            padding: .32rem .6rem;
+        }
+
+        .admin-page .card-body.p-4 {
+            padding: 1.15rem !important;
+        }
+
+        .admin-page .card-body.p-3 {
+            padding: .9rem !important;
         }
 
         @media (max-width: 991.98px) {
             .content-wrapper {
-                padding: 1rem;
+                padding: .9rem;
             }
         }
     </style>
@@ -248,10 +291,16 @@
                                     <span>Student Management</span>
                                 </a>
                             @endcan
-                            <a href="{{ route('admin.enrollments.index') }}" class="nav-link {{ request()->routeIs('admin.enrollments.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.enrollments.index') }}" class="nav-link {{ request()->routeIs('admin.enrollments.*') && ! request()->routeIs('admin.enrollments.promote*') ? 'active' : '' }}">
                                 <i class="bi bi-person-lines-fill"></i>
                                 <span>{{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage enrollments') ? 'My Students' : 'Enrollment Management' }}</span>
                             </a>
+                            @can('manage enrollments')
+                                <a href="{{ route('admin.enrollments.promote') }}" class="nav-link {{ request()->routeIs('admin.enrollments.promote') ? 'active' : '' }}">
+                                    <i class="bi bi-arrow-right-circle"></i>
+                                    <span>Promotion Center</span>
+                                </a>
+                            @endcan
                             <a href="{{ route('admin.attendance.index') }}" class="nav-link {{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">
                                 <i class="bi bi-check2-square"></i>
                                 <span>{{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage attendance') ? 'My Attendance' : 'Attendance' }}</span>
@@ -288,9 +337,13 @@
                                 </a>
                             @endcanany
                             @can('manage fee setup')
-                                <a href="{{ route('admin.fee-types.index') }}" class="nav-link {{ request()->routeIs('admin.fee-types.*') || request()->routeIs('admin.batch-fees.*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.batch-fees.directory') }}" class="nav-link {{ request()->routeIs('admin.fee-types.*') || request()->routeIs('admin.batch-fees.*') ? 'active' : '' }}">
                                     <i class="bi bi-receipt-cutoff"></i>
-                                    <span>Fee Setup</span>
+                                    <span>Batch Fee Setup</span>
+                                </a>
+                                <a href="{{ route('admin.fee-types.index') }}" class="nav-link {{ request()->routeIs('admin.fee-types.*') ? 'active' : '' }}">
+                                    <i class="bi bi-tags"></i>
+                                    <span>Fee Types</span>
                                 </a>
                             @endcan
                             @canany(['approve payments', 'settle teacher payments'])
@@ -506,9 +559,12 @@
                             @can('manage students')
                                 <a href="{{ route('admin.students.index') }}" class="nav-link text-white {{ request()->routeIs('admin.students.*') ? 'active bg-white bg-opacity-10' : '' }}">Student Management</a>
                             @endcan
-                            <a href="{{ route('admin.enrollments.index') }}" class="nav-link text-white {{ request()->routeIs('admin.enrollments.*') ? 'active bg-white bg-opacity-10' : '' }}">
+                            <a href="{{ route('admin.enrollments.index') }}" class="nav-link text-white {{ request()->routeIs('admin.enrollments.*') && ! request()->routeIs('admin.enrollments.promote*') ? 'active bg-white bg-opacity-10' : '' }}">
                                 {{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage enrollments') ? 'My Students' : 'Enrollment Management' }}
                             </a>
+                            @can('manage enrollments')
+                                <a href="{{ route('admin.enrollments.promote') }}" class="nav-link text-white {{ request()->routeIs('admin.enrollments.promote') ? 'active bg-white bg-opacity-10' : '' }}">Promotion Center</a>
+                            @endcan
                             <a href="{{ route('admin.attendance.index') }}" class="nav-link text-white {{ request()->routeIs('admin.attendance.*') ? 'active bg-white bg-opacity-10' : '' }}">
                                 {{ auth()->user()->hasRole('Teacher') && !auth()->user()->can('manage attendance') ? 'My Attendance' : 'Attendance' }}
                             </a>
@@ -531,7 +587,8 @@
                                 <a href="{{ route('admin.payments.index') }}" class="nav-link text-white {{ request()->routeIs('admin.payments.*') ? 'active bg-white bg-opacity-10' : '' }}">Payment Collection</a>
                             @endcanany
                             @can('manage fee setup')
-                                <a href="{{ route('admin.fee-types.index') }}" class="nav-link text-white {{ request()->routeIs('admin.fee-types.*') || request()->routeIs('admin.batch-fees.*') ? 'active bg-white bg-opacity-10' : '' }}">Fee Setup</a>
+                                <a href="{{ route('admin.batch-fees.directory') }}" class="nav-link text-white {{ request()->routeIs('admin.batch-fees.*') ? 'active bg-white bg-opacity-10' : '' }}">Batch Fee Setup</a>
+                                <a href="{{ route('admin.fee-types.index') }}" class="nav-link text-white {{ request()->routeIs('admin.fee-types.*') ? 'active bg-white bg-opacity-10' : '' }}">Fee Types</a>
                             @endcan
                             @canany(['approve payments', 'settle teacher payments'])
                                 <a href="{{ route('admin.distributions.index') }}" class="nav-link text-white {{ request()->routeIs('admin.distributions.*') ? 'active bg-white bg-opacity-10' : '' }}">Distribution History</a>

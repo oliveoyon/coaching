@@ -118,4 +118,12 @@ class User extends Authenticatable
         return $this->hasMany(AttendanceRecord::class, 'marked_by');
     }
 
+    /**
+     * Get enrollment fee adjustments created by this user.
+     */
+    public function enrollmentFeeAdjustments(): HasMany
+    {
+        return $this->hasMany(EnrollmentFeeAdjustment::class, 'created_by');
+    }
+
 }

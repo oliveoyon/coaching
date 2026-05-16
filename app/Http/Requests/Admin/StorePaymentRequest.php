@@ -32,10 +32,10 @@ class StorePaymentRequest extends FormRequest
             'payment_date' => ['required', 'date'],
             'method' => ['required', Rule::in(['cash', 'bkash', 'nagad'])],
             'transaction_id' => ['nullable', 'string', 'max:100'],
-            'month' => ['nullable', 'date_format:Y-m'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.enrollment_id' => ['required', Rule::exists('enrollments', 'id')],
             'items.*.batch_fee_id' => ['required', Rule::exists('batch_fees', 'id')],
+            'items.*.month' => ['nullable', 'date_format:Y-m'],
             'items.*.amount' => ['nullable', 'numeric', 'min:0'],
         ];
     }
@@ -48,7 +48,6 @@ class StorePaymentRequest extends FormRequest
         $validator->after(function (Validator $validator): void {
             $method = $this->string('method')->toString();
             $transactionId = $this->string('transaction_id')->toString();
-            $month = $this->string('month')->toString();
             $items = collect($this->input('items', []));
             $collectingItems = $items
                 ->map(fn ($item, $index) => ['index' => $index, 'data' => $item])
@@ -89,6 +88,7 @@ class StorePaymentRequest extends FormRequest
                 $amount = (float) Arr::get($data, 'amount', 0);
                 $enrollment = $enrollments->get((int) Arr::get($data, 'enrollment_id'));
                 $batchFee = $batchFees->get((int) Arr::get($data, 'batch_fee_id'));
+                $itemMonth = (string) Arr::get($data, 'month', '');
 
                 if (! $enrollment || ! $batchFee) {
                     continue;
@@ -119,14 +119,15 @@ class StorePaymentRequest extends FormRequest
                 }
 
                 $frequency = $batchFee->feeType?->frequency;
+                $selectedMonth = $itemMonth !== '' ? $itemMonth : now()->format('Y-m');
 
-                if ($frequency === 'monthly' && $month === '') {
-                    $validator->errors()->add('month', 'Billing month is required when collecting monthly fee items.');
+                if ($frequency === 'monthly' && $itemMonth === '') {
+                    $validator->errors()->add("items.{$index}.amount", 'Billing month is required for monthly fee items.');
                     continue;
                 }
 
                 if ($frequency === 'monthly') {
-                    $periodStart = $month.'-01';
+                    $periodStart = $itemMonth.'-01';
                     $periodEnd = date('Y-m-t', strtotime($periodStart));
 
                     if ($enrollment->start_date->format('Y-m-d') > $periodEnd) {
@@ -140,15 +141,25 @@ class StorePaymentRequest extends FormRequest
                     }
                 }
 
+                if (! $enrollment->relationLoaded('feeAdjustments')) {
+                    $enrollment->load('feeAdjustments');
+                }
+
+                if (! $enrollment->isFeeBillableForMonth($batchFee, $selectedMonth)) {
+                    $validator->errors()->add("items.{$index}.amount", 'This fee is not active for the selected month.');
+                    continue;
+                }
+
                 $existingPayment = Payment::query()
                     ->where('enrollment_id', $enrollment->id)
                     ->where('batch_fee_id', $batchFee->id)
-                    ->when($frequency === 'monthly', fn ($query) => $query->where('month', $month))
+                    ->when($frequency === 'monthly', fn ($query) => $query->where('month', $itemMonth))
                     ->when($frequency !== 'monthly', fn ($query) => $query->whereNull('month'))
                     ->whereIn('status', ['pending', 'approved'])
                     ->sum('amount');
 
-                $remaining = max(0, (float) $batchFee->amount - (float) $existingPayment);
+                $chargeAmount = $enrollment->chargeAmountForFee($batchFee, $selectedMonth);
+                $remaining = max(0, $chargeAmount - (float) $existingPayment);
 
                 if ($remaining <= 0) {
                     $validator->errors()->add("items.{$index}.amount", 'This fee item is already fully covered.');
