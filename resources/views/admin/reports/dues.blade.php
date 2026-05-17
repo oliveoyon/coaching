@@ -5,7 +5,14 @@
 @section('page-subtitle', 'Month-wise due list with student and guardian contact details.')
 
 @section('content')
-    <div class="card page-card mb-4">
+    <style>
+        .report-filter-shell {
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+        }
+    </style>
+
+    <div class="card page-card mb-4 report-filter-shell">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('reports.dues') }}" class="row g-3 align-items-end">
                 <div class="col-lg-2">
@@ -51,43 +58,49 @@
     </div>
 
     <div class="card page-card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Student</th>
-                            <th>Code</th>
-                            <th>Phone</th>
-                            <th>Guardian Phone</th>
-                            <th>Class</th>
-                            <th>Batch</th>
-                            <th>Fee Head</th>
-                            <th>Frequency</th>
-                            <th class="text-end">Due</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($dueRows as $row)
+        @if ($hasFilters)
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td>{{ $row['student_name'] }}</td>
-                                <td>{{ $row['student_code'] }}</td>
-                                <td>{{ $row['student_phone'] ?: '-' }}</td>
-                                <td>{{ $row['guardian_phone'] ?: '-' }}</td>
-                                <td>{{ $row['class_name'] }}</td>
-                                <td>{{ $row['batch_name'] }}</td>
-                                <td>{{ $row['fee_item'] }}</td>
-                                <td>{{ ucfirst($row['fee_frequency'] ?? '-') }}</td>
-                                <td class="text-end">{{ number_format((float) $row['remaining'], 2) }}</td>
+                                <th>Student</th>
+                                <th>Code</th>
+                                <th>Phone</th>
+                                <th>Guardian Phone</th>
+                                <th>Class</th>
+                                <th>Batch</th>
+                                <th>Fee Head</th>
+                                <th>Frequency</th>
+                                <th class="text-end">Due</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center py-4 text-muted">No due rows found for the selected month.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($dueRows as $row)
+                                <tr>
+                                    <td>{{ $row['student_name'] }}</td>
+                                    <td>{{ $row['student_code'] }}</td>
+                                    <td>{{ $row['student_phone'] ?: '-' }}</td>
+                                    <td>{{ $row['guardian_phone'] ?: '-' }}</td>
+                                    <td>{{ $row['class_name'] }}</td>
+                                    <td>{{ $row['batch_name'] }}</td>
+                                    <td>{{ $row['fee_item'] }}</td>
+                                    <td>{{ ucfirst($row['fee_frequency'] ?? '-') }}</td>
+                                    <td class="text-end">{{ number_format((float) $row['remaining'], 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="text-center py-4 text-muted">No due rows found for the selected filters.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        @else
+            <div class="card-body py-5 text-center text-muted">
+                Use the filters above to open the due report.
+            </div>
+        @endif
     </div>
 @endsection

@@ -5,7 +5,14 @@
 @section('page-subtitle', 'Monthly expense summary with detailed common and teacher expense entries.')
 
 @section('content')
-    <div class="card page-card mb-4">
+    <style>
+        .report-filter-shell {
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+        }
+    </style>
+
+    <div class="card page-card mb-4 report-filter-shell">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('reports.expenses') }}" class="row g-3 align-items-end">
                 <div class="col-lg-2">
@@ -40,61 +47,69 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        @forelse ($summary as $row)
-            <div class="col-md-4">
-                <div class="card metric-card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small text-uppercase">{{ ucfirst($row->expense_type) }} Expense</div>
-                        <div class="fs-4 fw-semibold mt-2">{{ number_format((float) $row->total_amount, 2) }}</div>
-                        <div class="small text-muted mt-1">{{ $row->entry_count }} entries</div>
+    @if ($hasFilters)
+        <div class="row g-4 mb-4">
+            @forelse ($summary as $row)
+                <div class="col-md-4">
+                    <div class="card metric-card h-100">
+                        <div class="card-body">
+                            <div class="text-muted small text-uppercase">{{ ucfirst($row->expense_type) }} Expense</div>
+                            <div class="fs-4 fw-semibold mt-2">{{ number_format((float) $row->total_amount, 2) }}</div>
+                            <div class="small text-muted mt-1">{{ $row->entry_count }} entries</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        @empty
-            <div class="col-12">
-                <div class="alert alert-light border mb-0">No expense summary found for the selected filters.</div>
-            </div>
-        @endforelse
-    </div>
+            @empty
+                <div class="col-12">
+                    <div class="alert alert-light border mb-0">No expense summary found for the selected filters.</div>
+                </div>
+            @endforelse
+        </div>
 
-    <div class="card page-card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Teacher</th>
-                            <th>Note</th>
-                            <th>Created By</th>
-                            <th class="text-end">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($expenses as $expense)
+        <div class="card page-card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td>{{ $expense->expense_date?->format('d M Y') }}</td>
-                                <td>{{ ucfirst($expense->type) }}</td>
-                                <td>{{ $expense->teacher?->user?->name ?: '-' }}</td>
-                                <td>{{ $expense->note }}</td>
-                                <td>{{ $expense->creator?->name ?: '-' }}</td>
-                                <td class="text-end">{{ number_format((float) $expense->amount, 2) }}</td>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Teacher</th>
+                                <th>Note</th>
+                                <th>Created By</th>
+                                <th class="text-end">Amount</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">No expense rows found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($expenses as $expense)
+                                <tr>
+                                    <td>{{ $expense->expense_date?->format('d M Y') }}</td>
+                                    <td>{{ ucfirst($expense->type) }}</td>
+                                    <td>{{ $expense->teacher?->user?->name ?: '-' }}</td>
+                                    <td>{{ $expense->note }}</td>
+                                    <td>{{ $expense->creator?->name ?: '-' }}</td>
+                                    <td class="text-end">{{ number_format((float) $expense->amount, 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No expense rows found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @if ($expenses->hasPages())
+                <div class="card-footer bg-white">
+                    {{ $expenses->links() }}
+                </div>
+            @endif
+        </div>
+    @else
+        <div class="card page-card">
+            <div class="card-body py-5 text-center text-muted">
+                Use the filters above to open the expense report.
             </div>
         </div>
-        @if ($expenses->hasPages())
-            <div class="card-footer bg-white">
-                {{ $expenses->links() }}
-            </div>
-        @endif
-    </div>
+    @endif
 @endsection

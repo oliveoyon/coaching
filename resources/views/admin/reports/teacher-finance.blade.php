@@ -5,7 +5,14 @@
 @section('page-subtitle', 'Teacher-wise earnings, settlements, and outstanding payables.')
 
 @section('content')
-    <div class="card page-card mb-4">
+    <style>
+        .report-filter-shell {
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+        }
+    </style>
+
+    <div class="card page-card mb-4 report-filter-shell">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('reports.teacher-finance') }}" class="row g-3 align-items-end">
                 <div class="col-lg-3">
@@ -46,72 +53,80 @@
         </div>
     </div>
 
-    <div class="card page-card mb-4">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Teacher</th>
-                            <th class="text-end">Earned In Month</th>
-                            <th class="text-end">Settled In Month</th>
-                            <th class="text-end">Outstanding Payable</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($teacherSummaries as $summary)
+    @if ($hasFilters)
+        <div class="card page-card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td>{{ $summary['teacher_name'] }}</td>
-                                <td class="text-end">{{ number_format((float) $summary['earned'], 2) }}</td>
-                                <td class="text-end">{{ number_format((float) $summary['settled'], 2) }}</td>
-                                <td class="text-end">{{ number_format((float) $summary['outstanding'], 2) }}</td>
+                                <th>Teacher</th>
+                                <th class="text-end">Earned In Month</th>
+                                <th class="text-end">Settled In Month</th>
+                                <th class="text-end">Outstanding Payable</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">No teacher finance data found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($teacherSummaries as $summary)
+                                <tr>
+                                    <td>{{ $summary['teacher_name'] }}</td>
+                                    <td class="text-end">{{ number_format((float) $summary['earned'], 2) }}</td>
+                                    <td class="text-end">{{ number_format((float) $summary['settled'], 2) }}</td>
+                                    <td class="text-end">{{ number_format((float) $summary['outstanding'], 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No teacher finance data found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="card page-card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Date</th>
-                            <th>Teacher</th>
-                            <th>Paid By</th>
-                            <th>Note</th>
-                            <th class="text-end">Settlement Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($settlementHistory as $settlement)
+        <div class="card page-card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td>{{ $settlement->settlement_date?->format('d M Y') }}</td>
-                                <td>{{ $settlement->teacher?->user?->name }}</td>
-                                <td>{{ $settlement->payer?->name ?: '-' }}</td>
-                                <td>{{ $settlement->note ?: '-' }}</td>
-                                <td class="text-end">{{ number_format((float) $settlement->amount, 2) }}</td>
+                                <th>Date</th>
+                                <th>Teacher</th>
+                                <th>Paid By</th>
+                                <th>Note</th>
+                                <th class="text-end">Settlement Amount</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">No settlement history found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($settlementHistory as $settlement)
+                                <tr>
+                                    <td>{{ $settlement->settlement_date?->format('d M Y') }}</td>
+                                    <td>{{ $settlement->teacher?->user?->name }}</td>
+                                    <td>{{ $settlement->payer?->name ?: '-' }}</td>
+                                    <td>{{ $settlement->note ?: '-' }}</td>
+                                    <td class="text-end">{{ number_format((float) $settlement->amount, 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No settlement history found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @if ($settlementHistory->hasPages())
+                <div class="card-footer bg-white">
+                    {{ $settlementHistory->links() }}
+                </div>
+            @endif
+        </div>
+    @else
+        <div class="card page-card">
+            <div class="card-body py-5 text-center text-muted">
+                Use the filters above to open the teacher finance report.
             </div>
         </div>
-        @if ($settlementHistory->hasPages())
-            <div class="card-footer bg-white">
-                {{ $settlementHistory->links() }}
-            </div>
-        @endif
-    </div>
+    @endif
 @endsection

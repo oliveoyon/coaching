@@ -5,7 +5,14 @@
 @section('page-subtitle', 'Detailed student list with class, active batches, and contact information.')
 
 @section('content')
-    <div class="card page-card mb-4">
+    <style>
+        .report-filter-shell {
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+        }
+    </style>
+
+    <div class="card page-card mb-4 report-filter-shell">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('reports.students') }}" class="row g-3 align-items-end">
                 <div class="col-lg-3">
@@ -55,54 +62,60 @@
     </div>
 
     <div class="card page-card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Student</th>
-                            <th>Code</th>
-                            <th>Class</th>
-                            <th>Phone</th>
-                            <th>Guardian Phone</th>
-                            <th>Active Batches</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($students as $student)
+        @if ($hasFilters)
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td>
-                                    <div class="fw-semibold">{{ $student->name }}</div>
-                                    <div class="text-muted small">{{ $student->school ?: 'School not set' }}</div>
-                                </td>
-                                <td>{{ $student->student_code }}</td>
-                                <td>{{ $student->academicClass?->name ?: '-' }}</td>
-                                <td>{{ $student->phone ?: '-' }}</td>
-                                <td>{{ $student->guardian_phone ?: '-' }}</td>
-                                <td>
-                                    @forelse ($student->enrollments as $enrollment)
-                                        <div>{{ $enrollment->batch?->name }}</div>
-                                    @empty
-                                        <span class="text-muted">No active batch</span>
-                                    @endforelse
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-{{ $student->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($student->status) }}</span>
-                                </td>
+                                <th>Student</th>
+                                <th>Code</th>
+                                <th>Class</th>
+                                <th>Phone</th>
+                                <th>Guardian Phone</th>
+                                <th>Active Batches</th>
+                                <th>Status</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">No students found for the selected filters.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($students as $student)
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ $student->name }}</div>
+                                        <div class="text-muted small">{{ $student->school ?: 'School not set' }}</div>
+                                    </td>
+                                    <td>{{ $student->student_code }}</td>
+                                    <td>{{ $student->academicClass?->name ?: '-' }}</td>
+                                    <td>{{ $student->phone ?: '-' }}</td>
+                                    <td>{{ $student->guardian_phone ?: '-' }}</td>
+                                    <td>
+                                        @forelse ($student->enrollments as $enrollment)
+                                            <div>{{ $enrollment->batch?->name }}</div>
+                                        @empty
+                                            <span class="text-muted">No active batch</span>
+                                        @endforelse
+                                    </td>
+                                    <td>
+                                        <span class="badge text-bg-{{ $student->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($student->status) }}</span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">No students found for the selected filters.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-        @if ($students->hasPages())
-            <div class="card-footer bg-white">
-                {{ $students->links() }}
+            @if ($students->hasPages())
+                <div class="card-footer bg-white">
+                    {{ $students->links() }}
+                </div>
+            @endif
+        @else
+            <div class="card-body py-5 text-center text-muted">
+                Use the filters above to open the student report.
             </div>
         @endif
     </div>

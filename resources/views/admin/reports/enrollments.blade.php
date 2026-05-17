@@ -5,7 +5,14 @@
 @section('page-subtitle', 'Detailed enrollment list with student, batch, teacher, and status filters.')
 
 @section('content')
-    <div class="card page-card mb-4">
+    <style>
+        .report-filter-shell {
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+        }
+    </style>
+
+    <div class="card page-card mb-4 report-filter-shell">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('reports.enrollments') }}" class="row g-3 align-items-end">
                 <div class="col-lg-3">
@@ -55,51 +62,57 @@
     </div>
 
     <div class="card page-card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Student</th>
-                            <th>Contact</th>
-                            <th>Class</th>
-                            <th>Batch</th>
-                            <th>Teachers</th>
-                            <th>Start</th>
-                            <th>End</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($enrollments as $enrollment)
+        @if ($hasFilters)
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td>
-                                    <div class="fw-semibold">{{ $enrollment->student?->name }}</div>
-                                    <div class="text-muted small">{{ $enrollment->student?->student_code }}</div>
-                                </td>
-                                <td>
-                                    <div>{{ $enrollment->student?->phone ?: '-' }}</div>
-                                    <div class="text-muted small">{{ $enrollment->student?->guardian_phone ?: '-' }}</div>
-                                </td>
-                                <td>{{ $enrollment->batch?->academicClass?->name ?: '-' }}</td>
-                                <td>{{ $enrollment->batch?->name }}</td>
-                                <td>{{ $enrollment->batch?->teachers?->pluck('user.name')->filter()->implode(', ') ?: '-' }}</td>
-                                <td>{{ $enrollment->start_date?->format('d M Y') }}</td>
-                                <td>{{ $enrollment->end_date?->format('d M Y') ?: '-' }}</td>
-                                <td><span class="badge text-bg-{{ $enrollment->status === 'active' ? 'success' : ($enrollment->status === 'completed' ? 'info' : 'secondary') }}">{{ ucfirst($enrollment->status) }}</span></td>
+                                <th>Student</th>
+                                <th>Contact</th>
+                                <th>Class</th>
+                                <th>Batch</th>
+                                <th>Teachers</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Status</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">No enrollments found for the selected filters.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($enrollments as $enrollment)
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ $enrollment->student?->name }}</div>
+                                        <div class="text-muted small">{{ $enrollment->student?->student_code }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ $enrollment->student?->phone ?: '-' }}</div>
+                                        <div class="text-muted small">{{ $enrollment->student?->guardian_phone ?: '-' }}</div>
+                                    </td>
+                                    <td>{{ $enrollment->batch?->academicClass?->name ?: '-' }}</td>
+                                    <td>{{ $enrollment->batch?->name }}</td>
+                                    <td>{{ $enrollment->batch?->teachers?->pluck('user.name')->filter()->implode(', ') ?: '-' }}</td>
+                                    <td>{{ $enrollment->start_date?->format('d M Y') }}</td>
+                                    <td>{{ $enrollment->end_date?->format('d M Y') ?: '-' }}</td>
+                                    <td><span class="badge text-bg-{{ $enrollment->status === 'active' ? 'success' : ($enrollment->status === 'completed' ? 'info' : 'secondary') }}">{{ ucfirst($enrollment->status) }}</span></td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">No enrollments found for the selected filters.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-        @if ($enrollments->hasPages())
-            <div class="card-footer bg-white">
-                {{ $enrollments->links() }}
+            @if ($enrollments->hasPages())
+                <div class="card-footer bg-white">
+                    {{ $enrollments->links() }}
+                </div>
+            @endif
+        @else
+            <div class="card-body py-5 text-center text-muted">
+                Use the filters above to open the enrollment report.
             </div>
         @endif
     </div>
